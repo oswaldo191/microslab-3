@@ -43,4 +43,8 @@ jobs:
       - name: Compilación
         run: pnpm -r build
       - name: Formato
-        run: pnpm format:check
+        shell: bash
+        run: |
+          files=$(pnpm exec prettier --list-different . || true)
+          for f in $files; do echo "::error file=$f::Formato distinto al de Prettier (ejecute pnpm format)"; done
+          test -z "$files"
