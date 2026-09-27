@@ -25,3 +25,16 @@ El paquete pre-F1 dejó pendiente qué parte de Calidad es imprescindible para V
 ## Estado de las partes
 
 El contenido de Quality V1 lo define la especificación maestra. Esta ADR sigue en **Propuesta** hasta la aprobación del Freeze, igual que la ubicación de la puerta (D-01).
+
+## Revisión CTO v2.1
+
+- **D-01 aprobada** (27/09/2026): F7B es V1 Readiness.
+- Se agrega **F7C — Piloto Controlado**, de 2 semanas, antes de producción:
+  - un laboratorio en operación real;
+  - e-CF reales;
+  - plan de retorno;
+  - revisión diaria;
+  - congelamiento de cambios;
+  - criterios go/no-go.
+- **La Puerta V1 se cruza al cerrar F7C.** Si el piloto no pasa, se corrige en la fase de origen y F7C se repite.
+- Esta ADR sigue en **Propuesta** hasta la aprobación final del Freeze.

@@ -51,3 +51,12 @@ Reglas que conviene tener a la vista:
 - **No es la Agenda de Citas.**
 
 D-12 queda cerrada. El texto original posterior al corte no se recuperó.
+
+## Revisión CTO v2.1 (D-26)
+
+- **Calendario Inteligente de Entrega:** se agrega la vista **agenda**, una lista cronológica continua, a las vistas de día, semana, mes y fecha.
+- **Qué es "inteligente":**
+  - fecha sugerida por TAT, jornada y feriados;
+  - riesgo calculado con la hora estimada de listo;
+  - prioridad calculada.
+- **Propuesta:** considerar la carga pendiente del área al sugerir la fecha.

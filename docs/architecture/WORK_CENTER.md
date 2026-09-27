@@ -1,6 +1,6 @@
 # Work Center — arquitectura consolidada
 
-**Estado:** propuesta, dentro del Architecture Freeze · 27 de septiembre de 2026 · ADR [0014](../adr/0014-work-center-sample-centric.md) (Propuesta)
+**Estado:** propuesta, dentro del Architecture Freeze v2.1 · 27 de septiembre de 2026 · ADR [0014](../adr/0014-work-center-sample-centric.md) (Propuesta)
 **Módulos:** `workcenter` (dueño), con `samples`, `results`, `rules-engine`, `validation`, `delivery`, `integrations` y `analytics`
 **Fases:** F4 (Foundation) · F5 (Operations) · F6 (resultados y validación) · F10 (productividad) · F17+ (equipos e IA)
 
@@ -50,6 +50,13 @@ Es la pantalla de llegada del bioanalista. No empieza buscando pacientes. Muestr
 - fuera de TAT;
 - pendientes de validación;
 - procesados hoy.
+
+**Revisión CTO v2.1 (D-24):** Mi Trabajo se confirma como pantalla de llegada por rol. Además de los contadores, muestra:
+
+- los críticos por notificar (D-25);
+- los SOP pendientes de lectura (Quality V1).
+
+Los contadores se leen de proyecciones.
 
 **Continuar trabajando** recuerda la última worklist, la vista, la muestra y el campo, mediante `workspace` **[A]**.
 
@@ -146,6 +153,9 @@ Está preparado para lectores USB, cámara, QR y equipos automatizados.
 
 ## 11. Supervisor, filtros, atajos, vistas y auditoría
 
+- **Turnos (D-28):** en F5 el turno es operativo y provisional, definido en Configuración. En F12 se lee de `hr`, dueño de turnos y guardias.
+- **Cadena de custodia (D-23):** el historial de la muestra muestra todos los eslabones (ADR 0026).
+- **Bloqueo de equipos (D-29, F13):** un equipo con mantenimiento o calibración vencidos puede bloquearse en las worklists.
 - **Supervisor [W]:**
   - ve el trabajo por bioanalista: pendientes, críticos, repeticiones, fuera de TAT, productividad, pendientes de validación e incidencias;
   - reasigna trabajo con permiso;

@@ -16,3 +16,15 @@
 ## Definición consolidada
 
 La definición completa está en [WORK_CENTER.md](../architecture/WORK_CENTER.md). Incluye la sección 29 "Menos clics", completada con el análisis de clics, pantallas y campos que esa sección pedía, sin requisitos nuevos. D-13 queda cerrada.
+
+## Revisión CTO v2.1
+
+- **Mi Trabajo (D-24):** se confirma como pantalla de llegada por rol. Muestra:
+  - los contadores del documento;
+  - "Continuar trabajando";
+  - las entregas en riesgo que dependen del usuario;
+  - los críticos por notificar;
+  - los SOP pendientes de lectura.
+- **Proyecciones:** Mi Trabajo se alimenta de proyecciones.
+- **Turnos:** en F5 el turno es operativo y provisional; en F12 se lee de `hr` (D-28).
+- **Cadena de custodia (ADR 0026):** se muestra en el historial de la muestra.

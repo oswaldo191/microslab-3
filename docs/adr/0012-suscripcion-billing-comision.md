@@ -32,3 +32,7 @@ Mitiga el riesgo R-06. La etapa de suscripción existe desde F2, antes de cualqu
 - El nombre visible (`FREE` inicialmente) es un dato de presentación: traducible y editable desde la consola.
 - Suscripciones, comisiones, estados de cuenta y auditoría referencian **plan + versión**, nunca el nombre.
 - Ninguna regla compara nombres. Las capacidades se leen de los *features* y límites del plan.
+
+## Revisión CTO v2.1
+
+**D-02 aprobada:** `FREE` es el nombre visible configurable. El identificador interno del plan no depende del nombre mostrado. Esta ADR sigue en Propuesta.

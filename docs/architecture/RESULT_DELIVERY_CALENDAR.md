@@ -1,6 +1,6 @@
 # Result Delivery Calendar — Calendario de Entrega de Resultados
 
-**Estado:** propuesta, dentro del Architecture Freeze · 27 de septiembre de 2026 · ADR [0020](../adr/0020-result-delivery-calendar.md) (Propuesta)
+**Estado:** propuesta, dentro del Architecture Freeze v2.1 · 27 de septiembre de 2026 · ADR [0020](../adr/0020-result-delivery-calendar.md) (Propuesta)
 **Módulo:** `delivery` (dominio Clinical) · **Fase:** F6, con integraciones en F10, F14 y F16
 
 > El calendario de entrega **no es la Agenda de Citas**. Es un sistema de compromisos operativos para la entrega de resultados.
@@ -142,7 +142,7 @@ La misma prioridad entra en la cola del Work Center como factor adicional de ord
 
 | Vista | Contenido | Origen |
 | --- | --- | --- |
-| **Calendario de Entregas** | Hoy, mañana, semana, mes y fecha específica. Cada día muestra pacientes pendientes, resultados listos, por validar, atrasados y entregas realizadas | [R] [L] |
+| **Calendario de Entregas** | Hoy, mañana, semana, mes, fecha específica y **agenda** (lista cronológica continua; revisión CTO v2.1, D-26). Cada día muestra pacientes pendientes, resultados listos, por validar, atrasados y entregas realizadas | [R] [L] |
 | **Entregas de Hoy** | Lista operacional: paciente, estudios, hora, estado y acción (Entregar, Ver estado, Priorizar, Escalar) | [R] [L] |
 | **Pacientes para una fecha** | Al elegir una fecha: paciente, identificación, orden, estudios, sucursal, médico, fecha y hora prometidas, estado del resultado y de la entrega, canal, responsable y prioridad. Se agrupa en listos, pendientes, atrasados y ya entregados | [R] [L] |
 | **Entregas en riesgo** | Compromisos WARNING y URGENT no listos, ordenados por prioridad operacional. Muestran el tiempo restante, la hora estimada de listo, el estudio que retrasa y la acción (Priorizar en Work Center, Escalar, Reprogramar, Avisar al paciente) | [L] · [P] columnas y acciones |
@@ -273,5 +273,7 @@ Todo lleva `laboratory_id`, RLS forzado y claves compuestas **[A]**.
 | ID | Tema | Propuesta |
 | --- | --- | --- |
 | D-08 | Umbrales iniciales | INFO 24 h; WARNING 12 h y 4 h; URGENT 2 h y 30 min; OVERDUE al vencer (del ejemplo del requisito) |
+| D-26 | Calendario Inteligente (revisión CTO) | Vista agenda y fecha sugerida por TAT, jornada, feriados y, como propuesta, carga del área |
+| D-27 | Avisos al paciente | Por el Centro de Comunicación: plantillas sin valores clínicos y consentimiento por canal |
 | D-21 | Entregas parciales (entregar unos estudios antes que otros) | Permitidas si el laboratorio lo habilita: el compromiso se divide en dos, cada uno con su historial |
 | — | Texto original desde "Entregas en riesgo" | Si existe, compararlo con este documento y ajustar |

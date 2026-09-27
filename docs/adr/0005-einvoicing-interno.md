@@ -35,3 +35,7 @@ Desde el 1 de noviembre de 2026 los Grandes Locales y Medianos solo pueden emiti
 - **Afinidad:** un documento termina su ciclo en el adaptador que lo transmitió.
 - **Mapeo:** hay un mapeo versionado del estado externo al interno por adaptador.
 - **Cambiar de proveedor no altera el dominio fiscal ni Caja y Facturación.**
+
+## Revisión CTO v2.1
+
+**D-03 aprobada con observación:** se mantiene la arquitectura de adaptadores para proveedor autorizado, DGII directo, sandbox y futuros proveedores. **No se implementa ninguno todavía.** Esta ADR sigue en Propuesta.
