@@ -31,3 +31,13 @@ No existe otro camino para escribir.
 
 El kernel (`apps/api/src/kernel`) no depende de NestJS ni de `pg`: define interfaces mínimas
 (`PgPoolLike`, `SqlClient`). Así se prueba de forma aislada y la capa HTTP es un adaptador delgado.
+
+## Adenda — Architecture Freeze (27 de septiembre de 2026, propuesta)
+
+- **Nueva etapa**, después de "módulo habilitado", para la **política de suscripción** (ACTIVE, GRACE_PERIOD, SUSPENDED). Las operaciones esenciales clínicas, definidas en una lista versionada de plataforma, nunca se bloquean (ADR 0012).
+- **Controles declarados por comando:** motivo, reautenticación y doble autorización (esta última mediante `approvals`).
+- **Auditoría (F1):**
+  - `client_time` y marca `offline` para operaciones sincronizadas;
+  - actor `provider` para respuestas de DGII o proveedores fiscales;
+  - `request_id` como correlation ID de extremo a extremo, propagado a outbox, colas y efectos externos.
+- **Efectos externos** (firma, transmisión, notificaciones): ocurren después del commit, desde el outbox, en colas con reintentos, circuit breaker y monitoreo de profundidad y edad.
