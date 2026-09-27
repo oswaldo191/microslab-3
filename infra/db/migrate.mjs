@@ -23,16 +23,22 @@ const psql = (sql, extra = []) =>
   }).trim();
 
 const psqlFile = (file) =>
-  execFileSync('psql', [url, '-v', 'ON_ERROR_STOP=1', '-q', '-X', '--single-transaction', '-f', file], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'inherit'],
-  });
+  execFileSync(
+    'psql',
+    [url, '-v', 'ON_ERROR_STOP=1', '-q', '-X', '--single-transaction', '-f', file],
+    {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'inherit'],
+    },
+  );
 
 psql(`CREATE SCHEMA IF NOT EXISTS kernel;
       CREATE TABLE IF NOT EXISTS kernel.schema_migrations (
         name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())`);
 
-const applied = new Set(psql('SELECT name FROM kernel.schema_migrations').split('\n').filter(Boolean));
+const applied = new Set(
+  psql('SELECT name FROM kernel.schema_migrations').split('\n').filter(Boolean),
+);
 const files = readdirSync(join(here, 'migrations'))
   .filter((f) => /^\d{4}_.+\.sql$/.test(f))
   .sort();

@@ -1,0 +1,26 @@
+/*
+ * Tokens de diseño provisionales tomados del PDF de UX/UI.
+ * En F1 se reemplazan por los tokens exportados de Figma (tipografía, espaciado, radios y sombras).
+ */
+:root {
+  --ms-color-primary: #0e5ac0; /* botones, selects, enlaces */
+  --ms-color-navy: #2e3a55; /* bloque de usuario de la barra lateral */
+  --ms-color-bg: #f0f6fc; /* fondo de la aplicación */
+  --ms-color-surface: #ffffff; /* tarjetas y tablas */
+  --ms-color-summary: #faf2eb; /* paneles de resumen (Caja, perfil) */
+  --ms-color-success: #22a447; /* Recibida, Validar, Realizar pago */
+  --ms-color-danger: #e0201b; /* Pendiente, Anular, Eliminar */
+  --ms-color-warning: #f07e1b; /* Cerrar caja, advertencias */
+  --ms-color-inactive: #3a3a3a; /* estado Inactivo */
+  --ms-color-text: #1f2430;
+  --ms-color-text-muted: #6b7280;
+  --ms-font-family: 'Open Sans', system-ui, sans-serif; /* a confirmar con Figma */
+  --ms-radius: 8px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--ms-font-family);
+  background: var(--ms-color-bg);
+  color: var(--ms-color-text);
+}

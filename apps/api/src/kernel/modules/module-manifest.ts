@@ -16,7 +16,9 @@ export interface ModuleManifest {
 export function defineModule(manifest: ModuleManifest): ModuleManifest {
   for (const command of manifest.commands) {
     if (command.module !== manifest.key) {
-      throw new Error(`El comando ${command.name} declara el módulo ${command.module}, no ${manifest.key}`);
+      throw new Error(
+        `El comando ${command.name} declara el módulo ${command.module}, no ${manifest.key}`,
+      );
     }
   }
   for (const event of manifest.events) {

@@ -1,0 +1,25 @@
+# Entorno de desarrollo local: PostgreSQL 16 y Redis 7.
+# Uso: pnpm db:up && DATABASE_URL_OWNER=... pnpm db:migrate
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Crea roles y base de datos la primera vez que arranca el contenedor.
+      - ../db/bootstrap.sql:/docker-entrypoint-initdb.d/01-bootstrap.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
+
+volumes:
+  pgdata:

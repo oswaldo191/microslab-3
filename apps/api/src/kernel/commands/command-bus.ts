@@ -38,7 +38,10 @@ export class CommandBus {
     const reason = options.reason?.trim();
     if (command.requiresReason && (!reason || reason.length < MIN_REASON_LENGTH)) {
       throw new DomainError('REASON_REQUIRED', 'Esta acción requiere un motivo', [
-        { field: 'reason', message: `Escriba un motivo de al menos ${MIN_REASON_LENGTH} caracteres` },
+        {
+          field: 'reason',
+          message: `Escriba un motivo de al menos ${MIN_REASON_LENGTH} caracteres`,
+        },
       ]);
     }
 
@@ -82,7 +85,12 @@ export class CommandBus {
           await tx.query(
             `INSERT INTO kernel.idempotency_keys (key, command, request_hash, response)
              VALUES ($1, $2, $3, $4)`,
-            [options.idempotencyKey, command.name, requestHash, JSON.stringify(outcome.result ?? null)],
+            [
+              options.idempotencyKey,
+              command.name,
+              requestHash,
+              JSON.stringify(outcome.result ?? null),
+            ],
           );
         }
         return outcome.result;
@@ -101,11 +109,20 @@ export function translateDatabaseError(error: unknown): unknown {
     case '23505':
       return new DomainError('CONFLICT', 'Ya existe un registro con esos datos');
     case '23503':
-      return new DomainError('VALIDATION_FAILED', 'Hace referencia a un registro que no existe en este laboratorio');
+      return new DomainError(
+        'VALIDATION_FAILED',
+        'Hace referencia a un registro que no existe en este laboratorio',
+      );
     case '42501':
-      return new DomainError('PERMISSION_DENIED', 'La operación no está permitida para este laboratorio o sucursal');
+      return new DomainError(
+        'PERMISSION_DENIED',
+        'La operación no está permitida para este laboratorio o sucursal',
+      );
     case '40001':
-      return new DomainError('CONFLICT', 'Otro usuario modificó los mismos datos; intente de nuevo');
+      return new DomainError(
+        'CONFLICT',
+        'Otro usuario modificó los mismos datos; intente de nuevo',
+      );
     default:
       return error;
   }

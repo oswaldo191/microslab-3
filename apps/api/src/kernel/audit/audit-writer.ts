@@ -32,7 +32,11 @@ export function redact(value: unknown): unknown {
  * Escribe un evento de auditoría en la MISMA transacción del cambio.
  * La base de datos encadena la huella y rechaza cualquier modificación posterior.
  */
-export async function writeAudit(tx: SqlClient, ctx: TenantContext, draft: AuditDraft): Promise<void> {
+export async function writeAudit(
+  tx: SqlClient,
+  ctx: TenantContext,
+  draft: AuditDraft,
+): Promise<void> {
   await tx.query(
     `INSERT INTO audit.audit_events
        (laboratory_id, branch_id, actor_type, actor_id, module, action, entity_type, entity_id,

@@ -32,15 +32,22 @@ test('el contexto se fija con parámetros, nunca con texto interpolado', () => {
 });
 
 test('la auditoría oculta secretos en cualquier nivel', () => {
-  const out = redact({ name: 'A', password: 'x', nested: { apiToken: 't', ok: 1 } }) as Record<string, any>;
+  const out = redact({ name: 'A', password: 'x', nested: { apiToken: 't', ok: 1 } }) as Record<
+    string,
+    any
+  >;
   assert.equal(out.password, '[protegido]');
   assert.equal(out.nested.apiToken, '[protegido]');
   assert.equal(out.nested.ok, 1);
 });
 
 test('los eventos deben llamarse <módulo>.<NombreEnPasado> y ser pequeños', () => {
-  assert.doesNotThrow(() => assertValidEvent({ type: 'orders.OrderRegistered', aggregateType: 'o', aggregateId: '1' }));
-  assert.throws(() => assertValidEvent({ type: 'orders.registered', aggregateType: 'o', aggregateId: '1' }));
+  assert.doesNotThrow(() =>
+    assertValidEvent({ type: 'orders.OrderRegistered', aggregateType: 'o', aggregateId: '1' }),
+  );
+  assert.throws(() =>
+    assertValidEvent({ type: 'orders.registered', aggregateType: 'o', aggregateId: '1' }),
+  );
   assert.throws(() =>
     assertValidEvent({
       type: 'orders.OrderRegistered',
@@ -52,12 +59,18 @@ test('los eventos deben llamarse <módulo>.<NombreEnPasado> y ser pequeños', ()
 });
 
 test('stableStringify ordena claves (misma entrada, misma huella)', () => {
-  assert.equal(stableStringify({ b: 1, a: { d: 2, c: 3 } }), stableStringify({ a: { c: 3, d: 2 }, b: 1 }));
+  assert.equal(
+    stableStringify({ b: 1, a: { d: 2, c: 3 } }),
+    stableStringify({ a: { c: 3, d: 2 }, b: 1 }),
+  );
 });
 
 test('los errores de PostgreSQL se traducen a errores de dominio', () => {
   assert.equal((translateDatabaseError({ code: '23505' }) as DomainError).code, 'CONFLICT');
-  assert.equal((translateDatabaseError({ code: '42501' }) as DomainError).code, 'PERMISSION_DENIED');
+  assert.equal(
+    (translateDatabaseError({ code: '42501' }) as DomainError).code,
+    'PERMISSION_DENIED',
+  );
 });
 
 test('el registro del backend contiene exactamente los 38 módulos oficiales, en orden', () => {
@@ -76,7 +89,9 @@ test('un módulo no puede declarar comandos o eventos de otro', () => {
     handle: async () => ({ result: null, audit: [{ action: 'x' }] }),
   });
   assert.throws(() => defineModule({ key: 'configuration', commands: [foreign], events: [] }));
-  assert.throws(() => defineModule({ key: 'configuration', commands: [], events: ['orders.Created'] }));
+  assert.throws(() =>
+    defineModule({ key: 'configuration', commands: [], events: ['orders.Created'] }),
+  );
 });
 
 // --- Tubería de comandos con una base falsa: verifica el orden y los cortes tempranos ---
@@ -119,9 +134,12 @@ const sample = defineCommand<{ v: number }, number>({
 test('sin permiso no se abre ninguna transacción', async () => {
   const db = new RecordingDb();
   const bus = new CommandBus(db);
-  await assert.rejects(bus.execute(sample, { v: 1 }, tenantContext(), { reason: 'motivo válido' }), {
-    code: 'PERMISSION_DENIED',
-  });
+  await assert.rejects(
+    bus.execute(sample, { v: 1 }, tenantContext(), { reason: 'motivo válido' }),
+    {
+      code: 'PERMISSION_DENIED',
+    },
+  );
   assert.equal(db.transactions, 0);
 });
 
@@ -130,7 +148,9 @@ test('sin motivo, una acción sensible no se ejecuta', async () => {
   const bus = new CommandBus(db);
   const ctx = tenantContext({ permissions: new Set(['configuration.sample.run']) });
   await assert.rejects(bus.execute(sample, { v: 1 }, ctx), { code: 'REASON_REQUIRED' });
-  await assert.rejects(bus.execute(sample, { v: 1 }, ctx, { reason: 'no' }), { code: 'REASON_REQUIRED' });
+  await assert.rejects(bus.execute(sample, { v: 1 }, ctx, { reason: 'no' }), {
+    code: 'REASON_REQUIRED',
+  });
   assert.equal(db.transactions, 0);
 });
 
@@ -139,7 +159,9 @@ test('un módulo fuera del plan responde MODULE_DISABLED antes de todo', async (
   const bus = new CommandBus(db);
   const gated = { ...sample, module: 'inventory' as const, name: 'inventory.x.run' };
   const ctx = tenantContext({ permissions: new Set(['configuration.sample.run']) });
-  await assert.rejects(bus.execute(gated, { v: 1 }, ctx, { reason: 'motivo válido' }), { code: 'MODULE_DISABLED' });
+  await assert.rejects(bus.execute(gated, { v: 1 }, ctx, { reason: 'motivo válido' }), {
+    code: 'MODULE_DISABLED',
+  });
   const enabled = tenantContext({ ...ctx, enabledModules: new Set(['inventory']) });
   assert.equal(await bus.execute(gated, { v: 2 }, enabled, { reason: 'motivo válido' }), 4);
 });

@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 10
+    env:
+      PG_SUPERUSER_URL: postgres://postgres:postgres@localhost:5432/postgres
+      PG_HOST_URL: postgres://localhost:5432
+      TEST_DATABASE_URL_APP: postgres://microslab_app:app_dev_password@localhost:5432/microslab_test
+      TEST_DATABASE_URL_DISPATCHER: postgres://microslab_dispatcher:dispatcher_dev_password@localhost:5432/microslab_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Cliente de PostgreSQL
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      # Sin lockfile todavía (se genera en el primer install con acceso al registro de npm).
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm --filter @microslab/contracts build
+      - name: Arquitectura modular
+        run: node tools/check-modules.mjs
+      - name: Base de datos (RLS, auditoría, outbox)
+        run: bash infra/db/tests/run.sh
+      - name: Pruebas del backend (unitarias + integración contra PostgreSQL)
+        run: pnpm --filter @microslab/api test
+      - name: Compilación
+        run: pnpm -r build
+      - name: Formato
+        run: pnpm format:check

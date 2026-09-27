@@ -3,7 +3,15 @@
  * Lo construye el borde (HTTP, worker, voz, conector) y viaja a todas las capas.
  * La base de datos lo recibe como SET LOCAL y RLS lo hace cumplir.
  */
-export type ActorType = 'user' | 'system' | 'voice' | 'ai' | 'device' | 'api' | 'support' | 'platform';
+export type ActorType =
+  | 'user'
+  | 'system'
+  | 'voice'
+  | 'ai'
+  | 'device'
+  | 'api'
+  | 'support'
+  | 'platform';
 
 export interface Actor {
   readonly type: ActorType;
@@ -46,7 +54,8 @@ export function toSessionSettings(ctx: TenantContext): SessionSettings {
     throw new Error('Contexto inválido: laboratoryId debe ser un UUID');
   }
   for (const id of ctx.branchIds) {
-    if (!UUID.test(id)) throw new Error('Contexto inválido: branchIds contiene un valor que no es UUID');
+    if (!UUID.test(id))
+      throw new Error('Contexto inválido: branchIds contiene un valor que no es UUID');
   }
   return {
     'app.laboratory_id': ctx.laboratoryId,

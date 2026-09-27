@@ -20,6 +20,9 @@ export function isModuleEnabled(ctx: TenantContext, key: ModuleKey): boolean {
 
 export function assertModuleEnabled(ctx: TenantContext, key: ModuleKey): void {
   if (!isModuleEnabled(ctx, key)) {
-    throw new DomainError('MODULE_DISABLED', `El módulo "${key}" no está habilitado en el plan de este laboratorio`);
+    throw new DomainError(
+      'MODULE_DISABLED',
+      `El módulo "${key}" no está habilitado en el plan de este laboratorio`,
+    );
   }
 }

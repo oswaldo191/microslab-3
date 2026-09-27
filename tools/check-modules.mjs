@@ -18,8 +18,10 @@ const problems = [];
 const registry = new Set(MODULES.map((m) => m.key));
 const folders = readdirSync(modulesDir).filter((f) => statSync(join(modulesDir, f)).isDirectory());
 
-for (const key of registry) if (!folders.includes(key)) problems.push(`Falta la carpeta del módulo "${key}"`);
-for (const f of folders) if (!registry.has(f)) problems.push(`Carpeta "${f}" no está en el registro de módulos`);
+for (const key of registry)
+  if (!folders.includes(key)) problems.push(`Falta la carpeta del módulo "${key}"`);
+for (const f of folders)
+  if (!registry.has(f)) problems.push(`Carpeta "${f}" no está en el registro de módulos`);
 
 const walk = (dir) =>
   readdirSync(dir).flatMap((name) => {
@@ -27,7 +29,8 @@ const walk = (dir) =>
     return statSync(p).isDirectory() ? walk(p) : p.endsWith('.ts') ? [p] : [];
   });
 
-const IMPORT = /(?:import|export)\s[^'"]*?from\s+['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g;
+const IMPORT =
+  /(?:import|export)\s[^'"]*?from\s+['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g;
 
 for (const file of walk(modulesDir)) {
   const owner = relative(modulesDir, file).split(sep)[0];
@@ -41,7 +44,9 @@ for (const file of walk(modulesDir)) {
     const where = relative(root, file);
     if (rel[0] === 'modules' && rel[1] && rel[1] !== owner) {
       if (!(rel.length === 3 && rel[2] === 'index.ts')) {
-        problems.push(`${where}: importa el interior del módulo "${rel[1]}" (${spec}); use su index.ts`);
+        problems.push(
+          `${where}: importa el interior del módulo "${rel[1]}" (${spec}); use su index.ts`,
+        );
       }
     }
     if (rel[0] === 'kernel' && target !== kernelIndex) {

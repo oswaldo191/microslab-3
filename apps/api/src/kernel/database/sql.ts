@@ -8,7 +8,10 @@ export interface QueryResult<R> {
 
 /** Cliente dentro de una transacción. Los parámetros van posicionales ($1, $2...). */
 export interface SqlClient {
-  query<R = Record<string, unknown>>(text: string, params?: readonly unknown[]): Promise<QueryResult<R>>;
+  query<R = Record<string, unknown>>(
+    text: string,
+    params?: readonly unknown[],
+  ): Promise<QueryResult<R>>;
 }
 
 /**

@@ -22,7 +22,9 @@ export function assertValidEvent(event: DomainEventDraft): void {
   }
   const size = Buffer.byteLength(JSON.stringify(event.payload ?? {}));
   if (size > MAX_PAYLOAD_BYTES) {
-    throw new Error(`Evento "${event.type}" demasiado grande (${size} bytes): envíe identificadores, no datos`);
+    throw new Error(
+      `Evento "${event.type}" demasiado grande (${size} bytes): envíe identificadores, no datos`,
+    );
   }
 }
 

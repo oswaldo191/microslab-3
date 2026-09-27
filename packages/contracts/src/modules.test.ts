@@ -9,7 +9,15 @@ test('hay exactamente 38 módulos con claves únicas', () => {
 });
 
 test('los módulos clínicos fundamentales no dependen del plan', () => {
-  const fundamentals = ['patients', 'orders', 'samples', 'results', 'validation', 'documents', 'workcenter'];
+  const fundamentals = [
+    'patients',
+    'orders',
+    'samples',
+    'results',
+    'validation',
+    'documents',
+    'workcenter',
+  ];
   for (const key of fundamentals) {
     const mod = MODULES.find((m) => m.key === key);
     assert.ok(mod, `falta el módulo ${key}`);

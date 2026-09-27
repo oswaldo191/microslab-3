@@ -12,3 +12,4 @@ export * from './commands/command-bus.js';
 export * from './commands/stable-json.js';
 export * from './validation/parse.js';
 export * from './modules/module-manifest.js';
+export * from './events/outbox-dispatcher.js';

@@ -33,7 +33,9 @@ export const ${camel(m.key)}Module = defineModule({
   created++;
 }
 
-const imports = MODULES.map((m) => `import { ${camel(m.key)}Module } from './${m.key}/index.js';`).join('\n');
+const imports = MODULES.map(
+  (m) => `import { ${camel(m.key)}Module } from './${m.key}/index.js';`,
+).join('\n');
 writeFileSync(
   join(modulesDir, 'index.ts'),
   `// Archivo generado por tools/scaffold-modules.mjs — no editar a mano.
