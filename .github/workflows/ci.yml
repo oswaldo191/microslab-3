@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+          # La caché de pnpm se activa cuando exista pnpm-lock.yaml.
       - name: Cliente de PostgreSQL
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
       # Sin lockfile todavía (se genera en el primer install con acceso al registro de npm).
