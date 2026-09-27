@@ -4,7 +4,7 @@
 
 ## Decisión
 
-- El módulo `ai` se renombra `clinical-ai`. No existe un dominio "Copilot".
+- El módulo `ai` se renombra `clinical-ai` mediante un rename controlado en F1 (F1-TD-05), preservando compatibilidad donde haga falta y sin mantener dos módulos paralelos. No existe un dominio "Copilot".
 - La IA sugiere, resume, detecta anomalías, explica, prioriza y genera borradores.
 - **Nunca es la autoridad clínica final** y nunca valida un resultado. Toda salida exige la acción de un humano autorizado y queda auditada como sugerencia.
 - No se envían datos de pacientes a proveedores externos hasta definir el proveedor y las condiciones de privacidad (D-15). Desde entonces rige la minimización de datos.

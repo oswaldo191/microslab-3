@@ -18,3 +18,7 @@ Los números fiscales (e-NCF) provienen de rangos autorizados por la DGII. Los c
 
 - El monitor de secuencias puede mostrar rango, actual, siguiente, usados, huecos y conflictos sin ambigüedad.
 - Mitiga el riesgo R-04.
+
+## Estado regulatorio
+
+Las reglas fiscales que esta ADR asume (autorización de rangos, contingencia y sus plazos, certificados, firma o estados, según corresponda) están **PENDIENTE DE VALIDACIÓN OFICIAL**. La arquitectura queda preparada. La implementación depende de la validación oficial ([informe](../architecture/ARCHITECTURE_FREEZE.md), sección 14.1).

@@ -5,7 +5,7 @@
 ## Decisión
 
 - Calidad se prepara para el Ministerio de Salud Pública y para acreditación estilo ISO 15189, sin requisitos legales inventados. Las reglas regulatorias se versionan (ADR 0008).
-- **Quality V1 mínimo** (F7B): lo define ADR 0010.
+- **Quality V1 mínimo** (se construye en F5 y F6, se verifica en F7B y se usa en el piloto F7C): lo define ADR 0010.
 - **Quality I** (F11):
   - control documental completo, con estados Draft, In Review, Approved y Obsolete; un documento aprobado nunca se sobrescribe;
   - manuales;

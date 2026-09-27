@@ -1,12 +1,19 @@
-# MICROSLAB 3.0 Enterprise — Architecture Freeze Report v2.1 (pre-F1)
+# MICROSLAB 3.0 Enterprise — Architecture Freeze Report v2.2 (pre-F1)
 
-**Estado:** v2.1 — APROBADO CON OBSERVACIONES por revisión CTO; observaciones integradas; **pendiente de aprobación final** · 27 de septiembre de 2026
+**Estado:** v2.2 — corrección final documental de consistencia; **pendiente de aprobación definitiva** · 27 de septiembre de 2026
 
 Historial:
 
 - **v1:** informe inicial.
 - **v2:** Calendario de Entregas y Work Center completos, D-01 a D-04 analizadas, roadmap F0–F7B.
 - **v2.1:** D-01 a D-04 aprobadas, fase F7C Piloto Controlado, decisiones D-23 a D-34 y Operations Center ampliado.
+- **v2.2:** corrección documental sin cambios de alcance:
+  - F7B = V1 Readiness, F7C = Controlled Pilot, Puerta V1 después de F7C;
+  - D-03 = arquitectura de conectores fiscales, sin proveedor seleccionado;
+  - supuestos regulatorios marcados como pendientes de validación oficial;
+  - deudas técnicas F1-TD-01 a F1-TD-05 (sección 38).
+
+**Secuencia de V1 (definición única, vale para todo este informe y las ADR):** F7 → **F7B V1 Readiness** → **F7C Controlled Pilot (2 semanas)** → **Puerta V1 (V1 Gate)**. La Puerta V1 ocurre solo después de completar F7C. F7B no es el piloto.
 **Frase de aprobación requerida:** `ARCHITECTURE FREEZE APPROVED — START F1`
 
 Este informe consolida la especificación maestra *MICROSLAB 3.0 ENTERPRISE — Master Architecture Freeze* con la arquitectura ya
@@ -23,7 +30,9 @@ Nada de este informe es código funcional, migración, tabla ni pantalla. El có
 | Principios innegociables | Se conservan todos los de F0 y se agregan multi-moneda, multi-idioma y observabilidad como preparación obligatoria |
 | Contradicciones encontradas | 26 (sección 0): 19 resueltas aplicando la especificación maestra, 7 con propuesta que necesita tu decisión (C-13, C-15, C-17, C-25, C-26 y las decisiones D-01 a D-04) |
 | Módulos | 55 propuestos (38 registrados en F0 + 11 ya documentados + 6 nuevos), `einvoicing` interno y no visible |
-| Roadmap | Orden de la especificación maestra con ajustes por dependencia (catálogo y ARS en F3; PDF y entregas en F6; F7B V1 Readiness; **F7C Piloto Controlado de 2 semanas**; Puerta V1 al cerrar F7C) |
+| Roadmap | Orden de la especificación maestra con ajustes por dependencia (catálogo y ARS en F3; PDF y entregas en F6; F7B V1 Readiness; **F7C Controlled Pilot de 2 semanas**; Puerta V1 después de completar F7C) |
+| F1 Technical Debt | F1-TD-01 a F1-TD-05, hardening obligatorio de F1, no implementado (sección 38) |
+| Regulación fiscal | Todo supuesto sobre e-CF y DGII está **PENDIENTE DE VALIDACIÓN OFICIAL** (sección 14.1, A-01) |
 | Decisiones | D-01 a D-04 **aprobadas** (sección 35.4). D-23 a D-34 nuevas, de la revisión CTO, con propuesta (sección 35.3). D-05 en adelante en la sección 35.2. D-12 y D-13 cerradas |
 | Operations Center | Responde automáticamente indicadores operativos, clínicos, financieros, de calidad, inventario, RR. HH. y entrega de resultados (sección 23.1) |
 | ADR | 0001–0004 aprobadas (adendas de 0001 y 0003 propuestas). 0005–0030 en estado **Propuesta**; 0025–0030 son nuevas en v2.1 |
@@ -44,14 +53,14 @@ Nada de este informe es código funcional, migración, tabla ni pantalla. El có
 | C-07 | Contingencias fiscales | A (conectividad) y B (imposibilidad técnica con comprobante no electrónico) | Connectivity Contingency y Technical Contingency, más Reconciliation Center y Emergency Mode | Adoptado; B se renombra Technical y el comprobante no electrónico queda solo si la norma y una declaración lo permiten |
 | C-08 | Permisos fiscales | `einvoicing.issue`, `.void_unused`, `.declare_contingency_b`… | Lista de 10 permisos de la especificación | Se adopta la lista maestra y se conservan los adicionales necesarios (sección 30) |
 | C-09 | Mantenimiento Fiscal | Configuración, rangos y monitor dispersos | Módulo interno con configuración, certificados, monitor, cola, rechazados, reconciliación, secuencias, diagnóstico, emergencia | Adoptado (sección 15) |
-| C-10 | Proveedores fiscales | Adaptador "DGII directo o proveedor, a decidir" | Abstracción para DGII Direct, Sandbox, Provider A, Provider B y futuros | Adoptado; el primero en implementarse es D-03 |
+| C-10 | Proveedores fiscales | Adaptador "DGII directo o proveedor, a decidir" | Abstracción para DGII Direct, Sandbox, Provider A, Provider B y futuros | Adoptado: la arquitectura es D-03 (aprobada). Qué conector y qué proveedor se implementan sigue pendiente (D-20, D-22) |
 | C-11 | Roadmap: F0 | F0 = fundaciones (ya construidas y probadas) | F0 = Architecture Freeze | F0 queda como "Fundaciones + Architecture Freeze"; lo construido no se rehace |
 | C-12 | Roadmap: seguridad y core | Usuarios, roles, MFA y configuración en F1 | F1 seguridad y fundaciones; F2 tenants, sucursales, usuarios, roles, permisos | Adoptado: F1 = seguridad técnica (autenticación, MFA, sesiones, AppShell); F2 = administración del core |
 | C-13 | Roadmap: catálogo clínico y ARS | F2 catálogo, F3 pacientes y ARS | No aparecen antes de F3 | **Propuesta:** F3 incluye catálogo y ARS porque una orden no existe sin estudios ni coberturas |
 | C-14 | Roadmap: Caja | F4, antes de muestras y resultados | F7, después de resultados | Adoptado; mientras tanto las órdenes existen sin cobro en ambientes de prueba |
 | C-15 | Roadmap: PDF, entrega, QR | F7 | QR/portales en F16; PDF y entrega sin fase explícita | **Propuesta:** PDF clínico, verificación QR mínima, registro de entregas y Result Delivery Calendar en F6, porque el flujo clínico no cierra sin ellos |
 | C-16 | Calidad para V1 | Decisión pendiente (sección 13 del paquete pre-F1) | V1 exige IQC básico, temperaturas, incidentes de bioseguridad, SOP críticos y tablero básico | Contenido adoptado de la especificación; ADR 0010 sigue en **Propuesta** hasta tu aprobación |
-| C-17 | Ubicación de la Puerta V1 | Tras F10 (consola SaaS) | No se indica | **Propuesta:** fase F7B "V1 Readiness" y Puerta V1 al cerrarla (D-01) |
+| C-17 | Ubicación de la Puerta V1 | Tras F10 (consola SaaS) | No se indica | **Aprobado (D-01, v2.1):** F7B "V1 Readiness" → F7C "Controlled Pilot" → Puerta V1 después de completar F7C |
 | C-18 | HR | Puestos dentro de `training` (calidad) | Dominio HR propio | Adoptado: `hr` es dueño de empleados, puestos, departamentos y contratos; `training` usa sus datos (D-04 confirma el reparto) |
 | C-19 | Analytics y BI | Un solo módulo `analytics` | Separados | Adoptado: `analytics` (operación) y `bi` (dirección) |
 | C-20 | IA | Módulo `ai` | Dominio `clinical-ai`, nunca "Copilot" | Adoptado: se renombra en el registro |
@@ -249,7 +258,7 @@ Defensa en profundidad, como exige la especificación:
 | --- | --- | --- |
 | Aplicación | Contexto de tenant resuelto por subdominio + token; debe coincidir o la petición se rechaza | F0 (middleware) |
 | Base de datos | `laboratory_id` en toda tabla de tenant, RLS **forzado**, claves foráneas compuestas, rol `microslab_app` sin `BYPASSRLS` | F0, probado |
-| Permisos | Permiso por comando con alcance de sucursal | F0 (pipeline) · F1 (desde roles) |
+| Permisos | Permiso por comando con alcance de sucursal; la base de datos es la fuente de verdad (F1-TD-02); `x-branch-id` es solo contexto operativo, nunca autorización (F1-TD-04) | F0 (pipeline) · F1 (desde roles) |
 | Auditoría | Cadena SHA-256 por laboratorio, verificable | F0 |
 | Plataforma | Super Admin nunca cruza tenants sin una acción explícita, con motivo, tiempo limitado y auditada ("acceso de soporte") | F2 |
 
@@ -345,11 +354,29 @@ Facturar · Facturas · e-CF · Notas de Crédito · Notas de Débito · Estado 
 `einvoicing` es un motor interno. Diseño detallado en la sección 22 del documento de arquitectura; lo que fija este informe:
 
 - **Documentos fiscales:** e-CF, XML, PDF (representación impresa), QR fiscal, hash, firma digital, transmisión, respuesta, rechazo, contingencia, reintentos, reconciliación y auditoría.
-- **Estados internos** (provisionales, a validar contra el modelo oficial vigente antes de implementar): DRAFT, READY, SIGNED, PENDING_TRANSMISSION, TRANSMITTED, ACCEPTED, REJECTED, VOIDED, CONTINGENCY, PENDING_RETRY, FAILED.
+- **Estados internos** (provisionales; **PENDIENTE DE VALIDACIÓN OFICIAL**): DRAFT, READY, SIGNED, PENDING_TRANSMISSION, TRANSMITTED, ACCEPTED, REJECTED, VOIDED, CONTINGENCY, PENDING_RETRY, FAILED.
 - **Estado externo separado:** cada documento guarda además `external_status` (el literal que devuelve DGII o el proveedor) y el motor lo traduce al estado interno con un mapeo versionado por proveedor. Nunca se asume que los nombres coinciden.
 - **Políticas fiscales:** `Fiscal Policy` + `Fiscal Policy Version` + fuente/referencia + fecha efectiva + auditoría. Incluye plazos de contingencia (`FiscalContingencyPolicy`), tipos aplicables y reglas de uso por tipo de e-CF.
-- **Adaptadores de transmisión** (interfaz `FiscalGateway`): `DGII_DIRECT`, `SANDBOX`, `PROVIDER_A`, `PROVIDER_B`, futuros. Solo se diseña la interfaz; ningún conector se implementa hasta D-03.
+- **Adaptadores de transmisión** (interfaz `FiscalGateway`): `DGII_DIRECT`, `SANDBOX`, `PROVIDER_A`, `PROVIDER_B` y futuros. D-03 aprueba solo la arquitectura. Ningún conector se implementa ni se selecciona hasta D-20 (y D-22 si aplica).
 - **Secuencias:** la autorización fiscal (rango aprobado por la DGII) y la secuencia interna (asignación a un punto de emisión) son entidades distintas (ADR 0006).
+
+### 14.1 Estado regulatorio de las reglas fiscales
+
+La arquitectura queda **preparada** para las reglas fiscales, pero **ninguna se presenta como hecho definitivo**. Las fuentes consultadas hasta hoy son secundarias (prensa y resúmenes). Todo lo siguiente está **PENDIENTE DE VALIDACIÓN OFICIAL**:
+
+| Tema | Qué se asume hoy | Qué necesita antes de implementarse |
+| --- | --- | --- |
+| Obligatoriedad y fechas | Grandes Locales y Medianos solo e-CF desde el 1 nov 2026; resto de contribuyentes con plazo al 15 nov 2026 (A-01) | Texto oficial de la DGII (ley, reglamento, avisos) cargado en `regulatory_references` |
+| Requisitos fiscales y tipos de e-CF | Catálogo de tipos y reglas de uso por tipo | Normas técnicas oficiales vigentes |
+| Estados fiscales | Lista interna provisional y `external_status` | Modelo de estados del servicio oficial y del conector elegido (D-20) |
+| Formatos | XML, representación impresa y QR fiscal | Esquemas y especificaciones oficiales vigentes |
+| Validaciones | Reglas de validación del documento antes de firmar | Especificación oficial de validaciones |
+| Certificados | Certificado del emisor para firmar | Requisitos oficiales del certificado y del ambiente |
+| Firma | Firma en servidor o nodo local (ADR 0009) | Especificación oficial de firma; modelo del conector (D-22) |
+| Contingencia | Connectivity y Technical Contingency; comprobante no electrónico solo si la norma lo permite | Reglamento y plazos oficiales vigentes (`FiscalContingencyPolicy`) |
+| Rangos y secuencias | Rangos autorizados por la DGII y secuencia interna separada (ADR 0006) | Procedimiento oficial de autorización de secuencias |
+
+**Regla:** la implementación de cada fila depende de su validación oficial. En F7, una regla sin fuente oficial cargada queda desactivada y no se usa. Validar con un contador o asesor fiscal forma parte de la preparación fiscal de F7B.
 
 ## 15. Mantenimiento Fiscal architecture
 
@@ -376,8 +403,8 @@ directo a la base de datos**.
 
 | Tipo | Causa | Qué hace el motor |
 | --- | --- | --- |
-| Connectivity Contingency | Internet, DGII, proveedor o comunicación | Sigue firmando en el servidor; los documentos quedan en CONTINGENCY o PENDING_TRANSMISSION y se transmiten al volver, dentro del plazo de la política vigente |
-| Technical Contingency | Problema interno: firma, XML, certificado, servicio, cola o infraestructura | Detiene la emisión afectada, alerta y registra; usa el mecanismo de contingencia que la norma y la política vigente permitan (incluido el comprobante no electrónico solo si está permitido y declarado) |
+| Connectivity Contingency (**PENDIENTE DE VALIDACIÓN OFICIAL**) | Internet, DGII, proveedor o comunicación | Sigue firmando en el servidor; los documentos quedan en CONTINGENCY o PENDING_TRANSMISSION y se transmiten al volver, dentro del plazo de la política vigente |
+| Technical Contingency (**PENDIENTE DE VALIDACIÓN OFICIAL**) | Problema interno: firma, XML, certificado, servicio, cola o infraestructura | Detiene la emisión afectada, alerta y registra; usa el mecanismo de contingencia que la norma y la política vigente permitan (incluido el comprobante no electrónico solo si está permitido y declarado) |
 
 Cada contingencia registra inicio, causa, sucursal, dispositivos, documentos afectados, acciones, fin y retransmisión
 (`fiscal_contingency_periods`). La sucursal sin internet es un caso de **Operational Offline** (sección 26): allí la emisión fiscal
@@ -427,7 +454,7 @@ Definición completa, con la marca de origen de cada punto: [RESULT_DELIVERY_CAL
 - **V1 mínimo obligatorio**, construido antes de la Puerta V1 y dentro de las fases funcionales (C-25):
   - en F5 (centro Quality del Work Center): registros de temperatura, incidentes de bioseguridad, y SOP críticos con versión, aprobación, firma electrónica y lectura obligatoria;
   - en F6: IQC básico diario (corrida, reglas básicas, bloqueo de liberación configurable) y tablero básico de calidad.
-  - F7B solo lo verifica en el piloto.
+  - F7B lo verifica en preproducción; F7C lo usa en operación real.
 - **Quality I (F11):** control documental completo (código, nombre, categoría, versión, creador, aprobador, fechas, estados Draft / In Review / Approved / Obsolete, PDF, Word, firma, auditoría; nunca se sobrescribe un aprobado), manuales, bitácoras restantes, capacitación ligada a HR, checklist de cumplimiento, calendario.
 - **Quality II (F13):** EQC, CAPA completo, auditorías internas completas, gestión de riesgos, competencias, acreditación, equipos y reactivos completos, tablero avanzado.
 - `biosafety` (nuevo): incidentes, exposiciones, cortopunzantes y gestión de desechos (manifiestos y retiros), con acceso restringido por tratarse de datos de salud del personal.
@@ -587,11 +614,11 @@ Se adopta el orden de la especificación maestra. Los ajustes por dependencia es
 | F4 | Work Center Foundation (centros, colas, prioridades, vistas, asignaciones) | Requiere muestras |
 | F5 | Work Center Operations (recepción, TAT Engine, escaneo, supervisor, turno operativo provisional, cadena de custodia completa en sede, D-23 y D-28) **+ Quality V1: temperaturas, incidentes de bioseguridad, SOP críticos (ajuste C-25)** | Requiere F4; el centro Quality es uno de los 8 centros |
 | F6 | Resultados, captura, validación **+ PDF clínico, QR de verificación mínimo, registro de entregas y Result Delivery Calendar (ajuste) + Quality V1: IQC básico y tablero básico (ajuste C-25)** | El flujo clínico no cierra sin documento y entrega; el IQC bloquea liberación |
-| F7 | Caja y Facturación + `einvoicing` + Mantenimiento Fiscal + Billing, Subscription y Commission Engines; CxC y reclamaciones ARS | Requiere órdenes, ARS y suscripción |
-| F7B | **V1 Readiness (ajuste):** preparación, integración, QA, seguridad, migración/operación, certificación e-CF en producción y capacitación. **Sin módulos nuevos** (C-25, C-26) | F7C |
-| F7C | **Piloto Controlado, 2 semanas (revisión CTO, D-31):** un laboratorio en operación real con plan de retorno, revisión diaria y criterios go/no-go | Puerta V1 |
-| **Puerta V1** | Criterios de salida de F7B y de F7C (secciones 35.1 y 35.3) | |
-| F8 | Inventory, Purchasing, Suppliers (+ CxP, aprobaciones, gastos y centros de costo) + kits y consumo por perfil (D-32) | Consumo por prueba requiere catálogo |
+| F7 | Caja y Facturación + `einvoicing` + Mantenimiento Fiscal + Billing, Subscription y Commission Engines; CxC y reclamaciones ARS. Reglas fiscales sujetas a validación oficial (sección 14.1) | Requiere órdenes, ARS y suscripción |
+| F7B | **V1 Readiness:** integración, QA, pruebas end-to-end, seguridad, migraciones, infraestructura, observabilidad, backups/restauración, capacitación, preparación operacional, preparación fiscal/e-CF, certificación/pruebas del conector fiscal correspondiente, preparación de soporte, datos iniciales y entorno piloto. **Sin módulos ni funcionalidades nuevas.** **No es el piloto** | Entrada a F7C |
+| F7C | **Controlled Pilot, 2 semanas (D-31):** laboratorio real, usuarios reales, operaciones reales controladas, monitoreo, incidentes, métricas, correcciones necesarias, evaluación de estabilidad y evaluación operacional | Puerta V1 |
+| **Puerta V1 (V1 Gate)** | Ocurre **después de completar F7C**, cuando se cumplen los criterios de salida de F7B (sección 35.1) y los go/no-go de F7C (sección 35.3) | |
+| F8 (después de la Puerta V1) | Inventory, Purchasing, Suppliers (+ CxP, aprobaciones, gastos y centros de costo) + kits y consumo por perfil (D-32) | Consumo por prueba requiere catálogo |
 | F9 | Agenda Enterprise (+ agenda de imágenes) | Requiere pacientes, recursos y sucursales |
 | F10 | Operations Center / Analytics: indicadores de todos los dominios disponibles (sección 23.1) | Requiere eventos de los módulos operativos |
 | F11 | Quality I + Dashboard Regulatorio de Salud Pública RD (D-34) | Requiere control documental y firma |
@@ -626,15 +653,15 @@ Ninguna otra fase cambió.
 | Fase | Objetivo | Depende de | Módulos que entran | Entregables obligatorios | ¿Bloquea V1? |
 | --- | --- | --- | --- | --- | --- |
 | **F0** | Fundaciones técnicas + Architecture Freeze | — | kernel, `audit` (motor), registro de módulos | Hecho: RLS forzado, auditoría encadenada, outbox, idempotencia, secuencias, tubería, verificador de fronteras. Este informe aprobado | Sí (hecho; falta la aprobación) |
-| **F1** | Security + Design System + Application Foundations | F0 | `security`, `configuration` (Configuration Engine), `audit` (visor), `notifications` (in-app), `search`, `workspace`; kernel `esign` | Autenticación, MFA, sesiones, dispositivos, AppShell, Design System en código, Configuration Engine con jerarquía y rollback, `Ctrl + K`, i18n y moneda preparados, observabilidad base, **registro de los 55 módulos** (C-24), adenda de auditoría (`client_time`, `offline`, `provider`) | Sí |
+| **F1** | Security + Design System + Application Foundations | F0 | `security`, `configuration` (Configuration Engine), `audit` (visor), `notifications` (in-app), `search`, `workspace`; kernel `esign` | Autenticación, MFA, sesiones, dispositivos, AppShell, Design System en código, Configuration Engine con jerarquía y rollback, `Ctrl + K`, i18n y moneda preparados, observabilidad base, **registro de los 55 módulos** (C-24) con rename controlado `ai` → `clinical-ai` (F1-TD-05); **cierre de F1-TD-01 a F1-TD-05** (sección 38), adenda de auditoría (`client_time`, `offline`, `provider`) | Sí |
 | **F2** | Core: tenants, sucursales, usuarios, roles, permisos, suscripción | F1 | `platform`, `configuration` (sucursales), `security` (roles y matriz), `billing` (estado de suscripción) | Provisión de laboratorios desde la consola, sucursales, usuarios, roles plantilla, matriz de permisos, estados ACTIVE, GRACE_PERIOD, SUSPENDED y CANCELLED, etapa de suscripción en la tubería con operaciones esenciales (D-06), acceso de soporte auditado, planes FREE, PRO y ENTERPRISE como datos (D-02) | Sí |
 | **F3** | Pacientes, órdenes, muestras (toma e identificación) + catálogo clínico y ARS | F2 | `catalog`, `rules-engine` (definición), `insurance` (coberturas), `patients`, `orders`, `samples` | Catálogo con versiones, precios, tipos de contenedor y lista de materiales; coberturas ARS; pacientes; órdenes; toma e identificación; **cálculo de tubos y etiqueta por tubo** con reimpresión auditada; eventos de custodia de toma y etiquetado; motor de valores críticos (definición, D-25) | Sí |
 | **F4** | Work Center Foundation | F3 | `workcenter` | Centros, worklists, ítems, asignaciones, políticas de prioridad configurables, vistas guardadas, estructura de Mi Trabajo | Sí |
 | **F5** | Work Center Operations + Quality V1 (parte operativa) | F4 | `workcenter`, `samples` (recepción, custodia), `logbooks`, `biosafety`, `doccontrol` (mínimo) | Recepción por escaneo, contexto de muestra, TAT Engine, supervisor, turno operativo provisional (D-28), reasignación, **cadena de custodia completa en sede y entre sucursales** (D-23), Mi Trabajo operativo (D-24). **Quality V1:** temperaturas, incidentes de bioseguridad, SOP críticos con firma y lectura obligatoria | Sí |
 | **F6** | Resultados, validación, documento y entrega + Quality V1 (IQC) | F5 | `results`, `validation`, `rules-engine` (evaluación, críticos, delta), `documents` (PDF clínico, QR mínimo), `delivery`, `quality` (IQC básico) | Entrada individual y masiva, fórmulas, delta, críticos, repeticiones, validación técnica y profesional, PDF, QR, **Result Delivery Calendar con vista agenda** (D-26), **Centro de Comunicación: salida, consentimiento, plantillas y registro** (D-27), protocolo de notificación de críticos (D-25), **IQC básico con bloqueo** y tablero básico de calidad | Sí |
-| **F7** | Caja y Facturación + e-CF + Billing | F6 (orden y resultado), F3 (ARS), F2 (suscripción) | `cashier`, `einvoicing`, `receivables`, `insurance` (reclamaciones y glosas), `billing`, `commissions`, `reports` (base) | Caja y Facturación con sus pestañas, solicitud fiscal a `einvoicing`, primer conector fiscal (D-03) en sandbox y certificación, Mantenimiento Fiscal, contingencias, Billing Engine, Subscription Engine, Commission Engine, CxC, reclamaciones ARS, reportes base | Sí |
-| **F7B** | **V1 Readiness** (sin módulos nuevos) | F1–F7 | — | Integración de extremo a extremo, QA de regresión, pruebas de carga, seguridad (pruebas de aislamiento por módulo, revisión externa), migración de datos del piloto si aplica, operación (monitoreo, alertas, respaldos y restauración probados, RPO/RTO de D-09, runbooks, simulacro de contingencia fiscal), certificación e-CF en producción, capacitación | Sí |
-| **F7C** | **Piloto Controlado (2 semanas)** | F7B | — | Operación real de un laboratorio con e-CF reales, plan de retorno, revisión diaria, congelamiento de cambios y criterios go/no-go (D-31) | Sí: su cierre **es** la Puerta V1 |
+| **F7** | Caja y Facturación + e-CF + Billing | F6 (orden y resultado), F3 (ARS), F2 (suscripción) | `cashier`, `einvoicing`, `receivables`, `insurance` (reclamaciones y glosas), `billing`, `commissions`, `reports` (base) | Caja y Facturación con sus pestañas, solicitud fiscal a `einvoicing`, arquitectura `FiscalGateway` con adaptador `SANDBOX`, el conector que resulte de D-20 (con D-22 si aplica), Mantenimiento Fiscal, contingencias, Billing, Subscription y Commission Engines, CxC, reclamaciones ARS, reportes base. Las reglas fiscales solo se activan con validación oficial (sección 14.1) | Sí |
+| **F7B** | **V1 Readiness** — no es el piloto | F1–F7 | — (sin módulos ni funcionalidades nuevas) | Integración; QA; pruebas end-to-end; seguridad (aislamiento por módulo, revisión externa); migraciones (datos del piloto, si aplica); infraestructura; observabilidad; backups y restauración probados (RPO/RTO, D-09); capacitación; preparación operacional (runbooks, simulacro de contingencia fiscal); preparación fiscal/e-CF (validación oficial de las reglas de la sección 14.1); certificación/pruebas del conector fiscal correspondiente (D-20); preparación de soporte; preparación de datos iniciales; preparación del entorno piloto | Sí |
+| **F7C** | **Controlled Pilot (2 semanas)** | F7B completa | — (solo correcciones necesarias) | Piloto real con laboratorio real, usuarios reales y operaciones reales controladas; monitoreo; gestión de incidentes; métricas; correcciones necesarias; evaluación de estabilidad; evaluación operacional; criterios go/no-go (D-31) | Sí: la Puerta V1 ocurre **después** de completarla |
 
 ### 33.2 Dónde queda cada dominio pedido
 
@@ -642,7 +669,7 @@ Ninguna otra fase cambió.
 | --- | --- | --- |
 | Work Center | F4 (foundation) · F5 (operations) · F6 (resultados y validación) | Sí |
 | Calendario de Entregas (`delivery`) | F6. Panel en Operations Center en F10, reglas en Automation en F14 y canal portal en F16 | Sí (F6) |
-| Caja y Facturación / e-CF (`cashier`, `einvoicing`) | F7; certificación en producción en F7B; e-CF reales en el piloto F7C | Sí |
+| Caja y Facturación / e-CF (`cashier`, `einvoicing`) | F7 (construcción) · F7B (preparación fiscal y certificación/pruebas del conector) · F7C (operación real en el piloto) | Sí |
 | Quality V1 mínimo | F5 y F6 (C-25) | Sí |
 | Quality I | F11 | No (después de V1) |
 | Quality II | F13 | No |
@@ -661,23 +688,25 @@ Ninguna otra fase cambió.
 
 ### 33.3 Qué bloquea V1
 
-- Todas las fases F0 a F7C terminadas con sus entregables obligatorios.
+- Todas las fases F0 a F7C completadas con sus entregables obligatorios. La Puerta V1 no ocurre al terminar F7B.
 - La aprobación de este Freeze.
-- D-01 a D-04 (aprobadas), más las que bloquean fases previas a V1: D-06, D-07, D-08, D-09, D-10, D-11, D-19, D-20, D-22, D-23, D-24, D-25, D-26, D-27, D-31, D-33 y D-35.
+- D-01 a D-04 (aprobadas), más las que bloquean fases previas a V1: D-06, D-07, D-08, D-09, D-10, D-11, D-19, D-20 (selección del conector y del proveedor), D-22 (custodia del certificado, si aplica), D-23, D-24, D-25, D-26, D-27, D-31, D-33 y D-35.
 - Los criterios de salida de F7B (sección 35.1) y los criterios go/no-go de F7C (sección 35.3, D-31).
+- La validación oficial de las reglas fiscales (sección 14.1).
+- Las deudas F1-TD-01 a F1-TD-05 cerradas en F1 (sección 38).
 
 ## 34. Risks
 
 | ID | Riesgo | Impacto | Mitigación |
 | --- | --- | --- | --- |
-| R-01 | Norma fiscal cambia o se interpreta mal | Documentos rechazados, sanciones | Políticas y referencias versionadas con fuente; validar contra documentación oficial antes de F7; revisión con contador |
+| R-01 | Norma fiscal cambia, se interpreta mal o no se valida oficialmente | Documentos rechazados, sanciones | Todo supuesto fiscal está pendiente de validación oficial (sección 14.1); políticas y referencias versionadas con fuente; reglas sin fuente desactivadas; revisión con contador en F7B |
 | R-02 | Certificación e-CF tarda más de lo previsto | Retrasa la Puerta V1 | Empezar la certificación del emisor durante F6; sandbox desde F7 |
 | R-03 | Llave de firma comprometida | Emisión fraudulenta | Gestor de llaves, acceso por identidad de servicio, rotación, revocación y alertas |
 | R-04 | Duplicado o hueco de e-NCF por concurrencia o caída | Inconsistencia fiscal | Asignación atómica, restricción única, estados persistidos antes de cada efecto externo, Reconciliation Center |
 | R-05 | Fuga entre tenants | Crítico | RLS forzado, claves compuestas, pruebas de aislamiento en CI (ya en F0) y pruebas por módulo nuevo |
 | R-06 | Suspensión bloquea continuidad clínica | Riesgo para pacientes | Lista de operaciones esenciales en la tubería, probada |
 | R-07 | Colas atascadas (fiscal, notificaciones, outbox) | Entregas o e-CF tardíos | Monitoreo de profundidad y edad, alertas, circuit breaker |
-| R-08 | Alcance de V1 demasiado grande (55 módulos preparados) | Retraso | Esqueletos sin funcionalidad; solo F1–F7B construyen |
+| R-08 | Alcance de V1 demasiado grande (55 módulos preparados) | Retraso | Esqueletos sin funcionalidad; solo F1–F7 construyen; F7B y F7C no agregan funcionalidad |
 | R-09 | Figma incompleto o inaccesible | Pantallas sin referencia | Design System como contrato; contraste pendiente en D-17 |
 | R-10 | Requisitos que llegan cortados (Work Center §29, Delivery Calendar §11) | Diseño incompleto | Completados solo con material existente y con marca de origen; lo propio va marcado [P]; si aparece el texto original, se compara |
 | R-15 | F7B crece con trabajo funcional pendiente | Puerta V1 tardía y sin control | F7B sin módulos ni pantallas nuevas; lo pendiente vuelve a su fase (D-01) |
@@ -698,14 +727,14 @@ Ninguna otra fase cambió.
 
 | ID | Decisión | Propuesta | Impacto | Dependencias | Riesgo | Recomendación arquitectónica |
 | --- | --- | --- | --- | --- | --- | --- |
-| D-01 | Dónde se cruza la Puerta V1 | Al cerrar F7B "V1 Readiness" → **aprobada en v2.1 con F7C: la puerta se cruza al cerrar F7C** | Define qué es V1 y cuándo un laboratorio opera en producción. Obliga a sacar de F7B toda construcción funcional (C-25, C-26) | F1–F7 completos; D-03 (conector certificado); D-09 (RPO/RTO); D-10 (nube); laboratorio piloto disponible | Que F7B crezca con "lo que faltó" y se vuelva una fase funcional; certificación e-CF lenta (R-02) | **Aprobar.** F7B no admite módulos ni pantallas nuevas: lo que falte se devuelve a su fase y la puerta espera |
+| D-01 | Dónde se cruza la Puerta V1 | **Aprobada (v2.1):** F7B V1 Readiness → F7C Controlled Pilot (2 semanas) → Puerta V1 después de completar F7C | Define qué es V1 y cuándo MicroSlab se abre a producción general. Obliga a sacar de F7B y F7C toda construcción funcional (C-25, C-26) | F1–F7 completos; conector fiscal certificado o probado (D-20); D-09 (RPO/RTO); D-10 (nube); laboratorio piloto disponible | Que F7B crezca con "lo que faltó" y se vuelva una fase funcional; certificación e-CF lenta (R-02) | **Aprobar.** F7B no admite módulos ni pantallas nuevas: lo que falte se devuelve a su fase y la puerta espera |
 
-**Qué debe estar terminado antes de cruzarla (criterios de salida de F7B):**
+**Criterios de salida de F7B (condición para entrar a F7C; todavía no son la Puerta V1):**
 
 1. F1 a F7 cerrados con sus entregables obligatorios (sección 33.1) y cero defectos críticos o altos abiertos.
 2. Flujo clínico completo, ensayado en un ambiente de preproducción con datos del piloto: orden → muestra → Work Center → resultado → validación → PDF/QR → entrega registrada en el Calendario.
-3. **e-CF listo para producción:** emisor certificado, contingencia de conectividad ensayada y Reconciliation Center probado. Los primeros e-CF reales se emiten en F7C.
-4. **Quality V1 mínimo en uso:** IQC diario con bloqueo configurado, registros de temperatura, incidentes de bioseguridad, SOP críticos leídos por el personal y tablero básico.
+3. **Preparación fiscal/e-CF:** reglas de la sección 14.1 validadas oficialmente, conector fiscal certificado o probado (D-20), contingencia de conectividad ensayada y Reconciliation Center probado. Los primeros e-CF reales se emiten en F7C.
+4. **Quality V1 mínimo configurado y verificado en preproducción:** IQC diario con bloqueo configurado, registros de temperatura, incidentes de bioseguridad, SOP críticos leídos por el personal y tablero básico.
 5. **Seguridad:**
    - pruebas de aislamiento de tenant en todos los módulos de V1;
    - revisión de seguridad externa;
@@ -717,10 +746,13 @@ Ninguna otra fase cambió.
    - runbooks de incidentes y de contingencia fiscal;
    - soporte y acceso de soporte auditado.
 7. **Migración:** si el piloto trae datos de otro sistema, migración ensayada y conciliada. Si no, se declara "sin migración".
-8. **Suscripción:** el piloto opera con su plan, estado de cuenta y comisión calculada sobre cobros reales. La suspensión fue probada sin afectar lo clínico.
-9. **Personas:** capacitación del personal del piloto. La operación real de 2 semanas y la aceptación firmada pasan a **F7C** (D-31).
+8. **Suscripción:** plan del piloto configurado; estado de cuenta y comisión probados; suspensión probada sin afectar lo clínico. La operación con cobros reales ocurre en F7C.
+9. **Personas y soporte:** capacitación del personal del piloto, soporte preparado, datos iniciales cargados y entorno piloto listo. La operación real de 2 semanas y la aceptación firmada ocurren en **F7C** (D-31).
+10. **F1 Technical Debt:** F1-TD-01 a F1-TD-05 cerradas (sección 38).
 
-**Confirmación:** F7B **no es una fase funcional grande**. Es una fase de preparación, integración, QA, seguridad, migración y operación, y de *readiness*. No registra módulos nuevos ni crea pantallas nuevas.
+**Confirmación:** F7B **no es el piloto** ni una fase funcional. Cubre exclusivamente integración, QA, pruebas end-to-end, seguridad, migraciones, infraestructura, observabilidad, backups y restauración, capacitación, preparación operacional, preparación fiscal/e-CF, certificación/pruebas del conector fiscal, preparación de soporte, datos iniciales y entorno piloto. No registra módulos nuevos, no crea pantallas nuevas y no introduce funcionalidades.
+
+**La Puerta V1 ocurre después de completar F7C**, con los criterios go/no-go de la sección 35.3.
 
 #### D-02 — Plan gratuito
 
@@ -734,19 +766,25 @@ Ninguna otra fase cambió.
 - Renombrar no crea una versión de precio ni altera el historial. Cambiar precio, comisión o límites sí crea una versión nueva (ADR 0012).
 - Ninguna regla de negocio compara nombres de plan. Las capacidades se leen de los *features* y límites del plan.
 
-#### D-03 — Primer conector fiscal
+#### D-03 — Fiscal Connector Architecture
 
 | ID | Decisión | Propuesta | Impacto | Dependencias | Riesgo | Recomendación arquitectónica |
 | --- | --- | --- | --- | --- | --- | --- |
-| D-03 | Primer conector fiscal | Proveedor autorizado para V1; DGII directo después | Define el primer adaptador que se construye en F7, el proceso de certificación y el costo por documento | Interfaz `FiscalGateway` (F7); selección del proveedor concreto (D-20); custodia del certificado (D-22); ADR 0009 | Dependencia comercial del proveedor; que el proveedor exija custodiar el certificado del laboratorio; estados externos distintos a los internos | **Aprobar**, sin implementar ningún conector ahora |
+| D-03 | Fiscal Connector Architecture | Arquitectura preparada para DGII Direct, Sandbox/entorno de pruebas, proveedor autorizado y futuros proveedores/adapters | Permite elegir o cambiar de conector sin tocar el dominio fiscal ni Caja y Facturación | Interfaz `FiscalGateway` (F7); D-20 (selección e implementación del conector concreto); D-22 (custodia del certificado, si aplica); ADR 0009; validación oficial (sección 14.1) | Dependencia comercial si se elige un proveedor; custodia del certificado; estados externos distintos a los internos | **Aprobada la arquitectura (v2.1).** No selecciona proveedor ni decide implementación |
 
-Arquitectura de adaptadores preparada (solo diseño):
+**Qué está aprobado y qué no:**
+
+- **Aprobada:** la arquitectura de conectores fiscales.
+- **PENDIENTE:** la selección concreta del proveedor y la implementación de cualquier conector. Dependen de D-20 y, si aplica, D-22.
+- La propuesta anterior ("proveedor autorizado para V1; DGII directo después") queda solo como **orientación a evaluar en D-20**. No es una decisión.
+
+Arquitectura de adaptadores preparada (solo diseño; ninguno implementado ni seleccionado):
 
 | Adaptador | Uso | Fase |
 | --- | --- | --- |
-| `AUTHORIZED_PROVIDER` (instancias `PROVIDER_A`, `PROVIDER_B`, …) | Emisión por proveedor autorizado por la DGII | F7 (el primero) |
-| `DGII_DIRECT` | Emisión directa con certificación propia del emisor | Posterior a V1 |
-| `SANDBOX` | Simulador determinista para pruebas, CI y capacitación; nunca en producción | F7 |
+| `AUTHORIZED_PROVIDER` (instancias `PROVIDER_A`, `PROVIDER_B`, …) | Emisión por proveedor autorizado por la DGII | Implementación pendiente de D-20 |
+| `DGII_DIRECT` | Emisión directa con certificación propia del emisor | Implementación pendiente de D-20 |
+| `SANDBOX` | Simulador determinista para pruebas, CI y capacitación; nunca en producción | F7 (no emite documentos fiscales) |
 | Futuros | Nuevos proveedores o cambios normativos | Cuando se decidan |
 
 - **Puerto único:** `FiscalGateway`, con las operaciones `submit`, `status`, `void`, `healthcheck` y `capabilities`.
@@ -755,7 +793,7 @@ Arquitectura de adaptadores preparada (solo diseño):
 - El adaptador se elige por **configuración fiscal del emisor y ambiente**, desde Mantenimiento Fiscal. Cambiar de adaptador es un comando con motivo, auditoría y doble autorización (D-07).
 - **Afinidad:** un documento termina su ciclo en el adaptador que lo transmitió. Solo los documentos nuevos usan el adaptador nuevo.
 - **Cambiar de proveedor no altera el dominio fiscal ni Caja y Facturación.** `cashier` solo conoce `fiscal_requests` e `invoice_fiscal_links`. Los estados internos, secuencias, contingencias, reconciliación y permisos de `einvoicing` son los mismos con cualquier adaptador.
-- **Custodia del certificado:** si el proveedor elegido firma con el certificado del laboratorio, la llave queda bajo custodia contractual del proveedor. Esa es una excepción a ADR 0009 que decides en D-22. MicroSlab nunca la expone en frontend, logs ni API.
+- **Custodia del certificado:** si el proveedor que se elija en D-20 firma con el certificado del laboratorio, la llave queda bajo custodia contractual del proveedor. Esa es una excepción a ADR 0009 que decides en D-22. MicroSlab nunca la expone en frontend, logs ni API.
 
 #### D-04 — RR. HH. frente a Calidad
 
@@ -802,7 +840,7 @@ Arquitectura de adaptadores preparada (solo diseño):
 | D-17 | Contraste de pantallas de Figma | Completar con más cuota de Figma | Diseño de pantallas |
 | D-18 | Alcance de `logistics` | Transporte de muestras entre sucursales y a laboratorios de referencia | F17+ |
 | D-19 | Acciones permitidas en Fiscal Emergency Mode | Solo contención (sección 15) | F7 |
-| D-20 | **Nueva:** proveedor autorizado concreto | Evaluar autorización DGII, API, sandbox, SLA, contingencia, custodia del certificado, residencia de datos y costo | F7 |
+| D-20 | Selección e implementación del conector fiscal concreto (complementa D-03) | Evaluar DGII directo frente a proveedores autorizados: autorización DGII, API, sandbox, SLA, contingencia, custodia del certificado, residencia de datos y costo. Sujeto a validación oficial | F7 |
 | D-21 | **Nueva:** entregas parciales de resultados | Permitidas si el laboratorio lo habilita (el compromiso se divide) | F6 |
 | D-22 | **Nueva:** custodia del certificado si el proveedor firma | Excepción contractual a ADR 0009 o proveedor que permita firmar en MicroSlab | F7 |
 | D-23 a D-34 | Revisión CTO v2.1 | Sección 35.3 | Ver cada una |
@@ -828,7 +866,7 @@ Reglas comunes a todas:
 | D-28 | Turnos y guardias en HR | "Turnos" en Work Center Operations (F5) | `hr` es dueño de turnos, guardias, rotaciones, cambios de turno y disponibilidad. Hasta F12, el Work Center usa una definición operativa de turnos (horarios de worklist en Configuración). En F12 esa definición pasa a leerse de `hr` con un comando de enlace auditado | `hr` (dueño) · `workcenter` (consume) | F5 (turno operativo provisional) · F12 (turnos y guardias completos) · **contenido agregado a F12** | Doble fuente de turnos entre F5 y F12: se resuelve con la regla de transición, igual que en D-04 |
 | D-29 | Mantenimiento Preventivo Inteligente de Equipos | `equipment` en Quality II (F13) | Planes preventivos por tiempo y por uso; calibraciones; bitácora de fallas; bloqueo configurable de un equipo vencido en las worklists; alertas. "Inteligente" (ver detalle): uso real desde el conector y tendencias de control de calidad; la predicción queda para `clinical-ai` | `equipment` (+ `integrations`, `analytics`) | F13 (preventivo y bloqueo) · F17+ (uso por conector, predicción) | Contadores de uso poco fiables sin conector |
 | D-30 | Motor de Reglas Clínicas separado de IA | Documento del Work Center, sección 23; ADR 0016 | Se formaliza en **ADR 0025**: `rules-engine` determinista, versionado y auditable, con autoridad sobre alertas, críticos, delta y bloqueos. `clinical-ai` solo sugiere y nunca escribe estados clínicos | `rules-engine` · `clinical-ai` | F3 · F6 · F17+ (IA) | Que una sugerencia de IA se confunda con una regla: se muestran distinto y quedan auditadas aparte |
-| D-31 | Fase F7C — Piloto Controlado | Piloto dentro de F7B (revisión 2) | Fase propia de **2 semanas** después de F7B y antes de la Puerta V1 (ver detalle) | — (fase) | **F7C nueva** | Hallazgos que obliguen a repetir el piloto |
+| D-31 | Fase F7C — Piloto Controlado | Piloto dentro de F7B en la revisión 2 (superado: F7B ya no incluye el piloto) | Fase propia de **2 semanas** después de F7B y antes de la Puerta V1 (ver detalle) | — (fase) | **F7C nueva** | Hallazgos que obliguen a repetir el piloto |
 | D-32 | Inventario por kits y consumo por perfil | Inventario F8 (costo promedio, kardex) | Kits de reactivos con determinaciones y estabilidad tras apertura. Consumo teórico por estudio y por perfil (lista de materiales), incluidos controles, calibradores y repeticiones. Descuento automático por eventos de resultado. Diferencia entre consumo teórico y real | `inventory` (+ `catalog` para la lista de materiales) | F8 (sin cambio de fase) | Listas de materiales incompletas distorsionan el costo |
 | D-33 | Gestión avanzada de tubos y etiquetas | Etiquetas fijas en F3; Label Builder en F15 | Tipos de contenedor por estudio (aditivo, color, volumen, orden de extracción). Cálculo del mínimo de tubos por orden. Etiqueta por tubo con código de barras. Alícuotas y etiquetas secundarias. Reimpresión auditada con motivo. Impresoras por puesto | `catalog` (reglas) · `samples` (tubos) · `documents` (etiquetas) | F3 (cálculo de tubos, etiquetas por tubo, reimpresión) · F15 (Label Builder) · **contenido agregado a F3** | Reglas de consolidación de tubos incorrectas: se definen por laboratorio y se aprueban |
 | D-34 | Dashboard Regulatorio de Salud Pública RD | `compliance` y `regulatory_references` (F11) | Tablero de cumplimiento construido **solo sobre requisitos cargados como referencias regulatorias versionadas** (ADR 0008). Ejemplos: habilitación y licencias con vencimientos, estado de los manuales y SOP, indicadores de calidad, reportes obligatorios. **No se asume ningún requisito legal**: cada indicador cita su norma | `compliance` (+ `quality`, `hr`, `doccontrol`) | F11 (sin cambio de fase) | Requisitos del Ministerio sin fuente oficial cargada: el indicador queda "sin fuente" y no se muestra como cumplido |
@@ -884,11 +922,13 @@ Estas reglas generan alertas y órdenes de mantenimiento. Las sugerencias predic
 
 #### Detalle de D-31 — F7C Piloto Controlado (2 semanas)
 
-**Qué es:**
+**Qué es (Controlled Pilot):**
 
+- piloto real de 2 semanas;
+- laboratorio real, usuarios reales, operaciones reales controladas;
 - un solo laboratorio y sus sucursales;
 - operación real con pacientes reales;
-- e-CF reales, porque la certificación en producción se completa en F7B;
+- e-CF reales, solo si la preparación fiscal y la certificación/pruebas del conector de F7B están completas y validadas oficialmente;
 - sin abrir el producto a otros laboratorios.
 
 **Controles:**
@@ -898,7 +938,10 @@ Estas reglas generan alertas y órdenes de mantenimiento. Las sugerencias predic
 - soporte dedicado;
 - monitoreo reforzado de colas y errores;
 - congelamiento de cambios (solo correcciones);
-- registro de hallazgos.
+- registro de hallazgos;
+- monitoreo, gestión de incidentes y métricas diarias;
+- correcciones necesarias (sin funcionalidades nuevas);
+- evaluación de estabilidad y evaluación operacional al cierre.
 
 **Criterios de salida (go/no-go), para aprobar en la aprobación final:**
 
@@ -909,22 +952,22 @@ Estas reglas generan alertas y órdenes de mantenimiento. Las sugerencias predic
 - aceptación firmada por el laboratorio;
 - decisión formal de Puerta V1.
 
-Si el piloto no pasa, se corrige en la fase que corresponda y **F7C se repite**. La Puerta V1 no se cruza con excepciones.
+Si el piloto no pasa, se corrige en la fase que corresponda y **F7C se repite**. La Puerta V1 no se cruza con excepciones y **solo ocurre después de completar F7C**. "Producción", en el sentido de la aprobación CTO, significa la apertura general de MicroSlab después de la Puerta V1; F7C es la operación real controlada de un solo laboratorio.
 
 ### 35.4 Estado de D-01 a D-04 tras la revisión CTO
 
 | ID | Estado | Observación incorporada |
 | --- | --- | --- |
-| D-01 | **Aprobada** (27/09/2026) | F7B = V1 Readiness. Se agrega **F7C Piloto Controlado (2 semanas)** antes de producción. La Puerta V1 se cruza al cerrar F7C |
+| D-01 | **Aprobada** (27/09/2026) | F7B = V1 Readiness (no es el piloto). F7C = Controlled Pilot (2 semanas) antes de la producción general. La Puerta V1 ocurre después de completar F7C |
 | D-02 | **Aprobada** | `FREE` es el nombre visible configurable. El identificador interno no depende de él |
-| D-03 | **Aprobada con observación** | Arquitectura de adaptadores para proveedor autorizado, DGII directo, sandbox y futuros. **Ningún conector se implementa todavía** |
+| D-03 | **Aprobada la arquitectura** (Fiscal Connector Architecture) | Preparada para DGII Direct, sandbox, proveedor autorizado y futuros adapters. **No selecciona proveedor.** La selección e implementación quedan pendientes en D-20 y D-22 |
 | D-04 | **Aprobada** | `hr` es dueño de empleados y estructura laboral. Calidad los consume para competencias, capacitación y cumplimiento |
 
 Las ADR relacionadas (0005, 0010, 0012 y 0022) registran la aprobación de su decisión, pero siguen en estado **Propuesta** hasta la aprobación final del Freeze.
 
 ## 36. Assumptions
 
-- A-01: Todos los laboratorios clientes estarán obligados a e-CF antes de V1 (aviso DGII de agosto de 2026; plazo de pequeños al 15 de noviembre de 2026). A validar con fuentes oficiales antes de F7.
+- A-01 — **PENDIENTE DE VALIDACIÓN OFICIAL**: se asume que todos los laboratorios clientes estarán obligados a e-CF antes de V1. Fechas leídas en fuentes secundarias: Grandes Locales y Medianos desde el 1 nov 2026; resto con plazo al 15 nov 2026. También quedan pendientes de validación oficial los requisitos fiscales, estados, formatos, validaciones, certificados, firma y contingencia (sección 14.1). La arquitectura queda preparada, pero la implementación depende de la validación oficial.
 - A-02: V1 opera solo en República Dominicana, en español y en RD$; lo regional es preparación.
 - A-03: Un laboratorio es un emisor fiscal (un RNC); varios RNC por tenant se modelan como varias configuraciones fiscales si hace falta.
 - A-04: El piloto es un laboratorio con varias sucursales y ARS; imágenes y domicilio no son requisito de V1.
@@ -941,12 +984,12 @@ Las ADR relacionadas (0005, 0010, 0012 y 0022) registran la aprobación de su de
 | [0002](../adr/0002-multi-tenancy-rls.md) | Multi-tenancy y RLS | Aprobada |
 | [0003](../adr/0003-comandos-auditoria-outbox.md) | Comandos, auditoría, outbox, idempotencia | Aprobada (adenda: etapa de suscripción, correlación) |
 | [0004](../adr/0004-desviaciones-fase-0.md) | Ajustes técnicos de F0 | Aprobada |
-| [0005](../adr/0005-einvoicing-interno.md) | e-invoicing interno consumido por Caja y Facturación | Propuesta (D-03 aprobada con observación) |
+| [0005](../adr/0005-einvoicing-interno.md) | e-invoicing interno y Fiscal Connector Architecture | Propuesta (arquitectura D-03 aprobada; proveedor pendiente, D-20/D-22) |
 | [0006](../adr/0006-secuencia-fiscal-vs-interna.md) | Autorización fiscal frente a secuencia interna | Propuesta |
 | [0007](../adr/0007-offline-y-contingencias.md) | Offline y contingencias separadas | Propuesta |
 | [0008](../adr/0008-reglas-externas-versionadas.md) | Reglas fiscales y regulatorias versionadas | Propuesta |
 | [0009](../adr/0009-llaves-de-firma.md) | Llaves de firma solo en servidor o nodo seguro | Propuesta |
-| [0010](../adr/0010-puerta-v1.md) | Puerta V1, F7B, F7C y Quality V1 mínimo | Propuesta (D-01 aprobada) |
+| [0010](../adr/0010-puerta-v1.md) | F7B V1 Readiness, F7C Controlled Pilot, Puerta V1 y Quality V1 mínimo | Propuesta (D-01 aprobada) |
 | [0011](../adr/0011-mantenimiento-fiscal.md) | Mantenimiento Fiscal | Propuesta |
 | [0012](../adr/0012-suscripcion-billing-comision.md) | Suscripción, billing y comisión | Propuesta (D-02 aprobada) |
 | [0013](../adr/0013-jerarquia-de-configuracion.md) | Jerarquía de configuración | Propuesta |
@@ -970,7 +1013,21 @@ Las ADR relacionadas (0005, 0010, 0012 y 0022) registran la aprobación de su de
 
 ---
 
-## Verificación del Freeze (v2.1)
+## 38. F1 Technical Debt / Mandatory Hardening
+
+Son deudas técnicas **registradas, no implementadas**. Son hardening obligatorio de F1 y se cierran antes de salir de F1 (condición también de la sección 35.1, punto 10). Ninguna agrega funcionalidad, módulos ni pantallas.
+
+| ID | Tema | Estado actual verificado en el repositorio (F0) | Qué debe hacer F1 |
+| --- | --- | --- | --- |
+| **F1-TD-01** | Lockfile | `.github/workflows/ci.yml` ejecuta `pnpm install --no-frozen-lockfile` y el repositorio no tiene `pnpm-lock.yaml` | Generar y hacer commit de `pnpm-lock.yaml`; cambiar CI a `pnpm install --frozen-lockfile`; asegurar builds reproducibles |
+| **F1-TD-02** | Authorization Source of Truth | Los permisos (`perms`) y los módulos habilitados (`modules`) viajan provisionalmente en el JWT (`apps/api/src/http/auth/access-token.ts`), como documenta ADR 0004 | La fuente de verdad de permisos es la **base de datos**; roles y permisos se resuelven desde el modelo autorizado; el JWT no es la autoridad definitiva de permisos; se mantiene compatibilidad con sesiones y tokens durante la transición |
+| **F1-TD-03** | JWT Production Hardening | Firma HS256 con `JWT_SECRET` leído de la configuración (mínimo 16 caracteres) | Llaves en secret manager; rotación; key IDs (`kid`) cuando corresponda; expiración corta; estrategia de refresh y sesión; revocación; ningún secreto hardcodeado |
+| **F1-TD-04** | Branch Context Security | El middleware toma `x-branch-id` como sucursal activa. Las sucursales permitidas vienen del token y RLS limita por ellas | `x-branch-id` es **solo contexto operativo y nunca autorización**. La autorización se deriva de User → Roles → Permissions → Allowed Branches → RLS. Un usuario no puede acceder a una sucursal enviando otro `x-branch-id`: la sucursal activa debe pertenecer a sus sucursales permitidas o la petición se rechaza |
+| **F1-TD-05** | Controlled Rename `ai` → `clinical-ai` | `packages/contracts/src/modules.ts` registra el módulo con la clave `ai` | Renombrar de forma controlada a `clinical-ai`, preservando compatibilidad donde sea necesario (alias temporal en el registro, verificación de fronteras, permisos `ai.*`). No mantener dos módulos conceptualmente paralelos. Se hace junto con la actualización del registro a 55 módulos (C-24) |
+
+**Regla:** ninguna de estas deudas se implementa durante el Freeze. Se ejecutan en F1, después de recibir `ARCHITECTURE FREEZE APPROVED — START F1`.
+
+## Verificación del Freeze (v2.2)
 
 | Verificación | Resultado |
 | --- | --- |
@@ -983,13 +1040,19 @@ Las ADR relacionadas (0005, 0010, 0012 y 0022) registran la aprobación de su de
 | Qué cambió | Solo `docs/architecture/*.md` y `docs/adr/*.md` en la rama `docs/architecture-freeze`; Design System (artefacto) y notas en los documentos de arquitectura |
 | Estado de ADR 0005–0030 | **Propuesta** (0025–0030 nuevas en v2.1) |
 | Pull request | No abierto |
+| Módulos, pantallas o funcionalidades agregados en v2.2 | Ninguno |
+| Secuencia F7B → F7C → Puerta V1 | Definida de forma única (encabezado, secciones 33, 33.1, 35.1, 35.3 y 35.4; ADR 0010) |
+| D-03 | Solo arquitectura aprobada; ningún proveedor seleccionado (D-20, D-22 pendientes) |
+| A-01 y reglas fiscales | Pendientes de validación oficial (sección 14.1) |
+| Deudas F1 | F1-TD-01 a F1-TD-05 registradas (sección 38) |
 | Merge a `main` | No realizado |
 
 ## Quality gate antes de F1
 
 | Punto | Estado |
 | --- | --- |
-| Architecture Freeze terminado | **v2.1** — observaciones CTO integradas, esperando aprobación final |
+| Architecture Freeze terminado | **v2.2** — corrección documental final, esperando aprobación definitiva |
+| F1 Technical Debt / Mandatory Hardening | Sección 38 — registrada, no implementada |
 | Observaciones CTO (D-23 a D-34, F7C, Operations Center) | Secciones 23.1, 33, 35.3 — pendiente de aprobación final |
 | Calendario de Entregas completo | [RESULT_DELIVERY_CALENDAR.md](RESULT_DELIVERY_CALENDAR.md) — pendiente de aprobación |
 | Work Center completo (sección 29) | [WORK_CENTER.md](WORK_CENTER.md) — pendiente de aprobación |

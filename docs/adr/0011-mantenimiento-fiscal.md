@@ -33,3 +33,7 @@ Mantenimiento Fiscal es un módulo interno de `einvoicing` para resolver eventua
 ## Consecuencias
 
 El soporte fiscal se hace con herramientas auditadas y no con SQL manual.
+
+## Estado regulatorio
+
+Las reglas fiscales que esta ADR asume (autorización de rangos, contingencia y sus plazos, certificados, firma o estados, según corresponda) están **PENDIENTE DE VALIDACIÓN OFICIAL**. La arquitectura queda preparada. La implementación depende de la validación oficial ([informe](../architecture/ARCHITECTURE_FREEZE.md), sección 14.1).

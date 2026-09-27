@@ -24,3 +24,7 @@ Se definen cuatro situaciones, cada una con su respuesta:
 ## Consecuencias
 
 El navegador nunca firma ni numera documentos fiscales. Lo operacional y lo fiscal se prueban por separado.
+
+## Estado regulatorio
+
+Las reglas fiscales que esta ADR asume (autorización de rangos, contingencia y sus plazos, certificados, firma o estados, según corresponda) están **PENDIENTE DE VALIDACIÓN OFICIAL**. La arquitectura queda preparada. La implementación depende de la validación oficial ([informe](../architecture/ARCHITECTURE_FREEZE.md), sección 14.1).

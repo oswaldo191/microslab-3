@@ -22,4 +22,8 @@ Mitiga el riesgo R-03. La infraestructura (D-10) debe ofrecer un gestor de llave
 
 ## Pendiente (D-22)
 
-Si el proveedor autorizado de V1 firma con el certificado del laboratorio, la llave queda bajo custodia contractual del proveedor. Esa excepción a esta ADR requiere tu decisión explícita. Aun así, la llave nunca pasa por el frontend, los logs ni la API de MicroSlab.
+Si el proveedor que se seleccione en D-20 (todavía no elegido) firma con el certificado del laboratorio, la llave queda bajo custodia contractual del proveedor. Esa excepción a esta ADR requiere tu decisión explícita. Aun así, la llave nunca pasa por el frontend, los logs ni la API de MicroSlab.
+
+## Estado regulatorio
+
+Las reglas fiscales que esta ADR asume (autorización de rangos, contingencia y sus plazos, certificados, firma o estados, según corresponda) están **PENDIENTE DE VALIDACIÓN OFICIAL**. La arquitectura queda preparada. La implementación depende de la validación oficial ([informe](../architecture/ARCHITECTURE_FREEZE.md), sección 14.1).
