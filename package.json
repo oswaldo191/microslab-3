@@ -20,7 +20,7 @@
     "modules:check": "node tools/check-modules.mjs"
   },
   "devDependencies": {
-    "prettier": "^3.6.0",
+    "prettier": "3.8.1",
     "turbo": "^2.5.0",
     "typescript": "^5.9.0"
   }
