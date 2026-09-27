@@ -1,0 +1,34 @@
+{
+  "name": "@microslab/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsc -p tsconfig.test.json && node --test \"dist-test/**/*.test.js\"",
+    "start": "node dist/main.http.js",
+    "start:worker": "node dist/main.worker.js",
+    "dev": "node --watch dist/main.http.js"
+  },
+  "dependencies": {
+    "@microslab/contracts": "workspace:*",
+    "@nestjs/common": "^11.1.0",
+    "@nestjs/core": "^11.1.0",
+    "@nestjs/platform-express": "^11.1.0",
+    "bullmq": "^5.56.0",
+    "ioredis": "^5.6.0",
+    "jose": "^6.0.0",
+    "pg": "^8.16.0",
+    "pino": "^9.7.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.15.0",
+    "@types/pg": "^8.15.0",
+    "typescript": "^5.9.0"
+  }
+}
