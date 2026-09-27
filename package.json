@@ -1,0 +1,27 @@
+{
+  "name": "microslab",
+  "private": true,
+  "version": "0.0.0",
+  "description": "MICROSLAB 3.0 — plataforma SaaS multi-laboratorio para laboratorios clínicos",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:up": "docker compose -f infra/docker/docker-compose.yml up -d",
+    "db:migrate": "node infra/db/migrate.mjs",
+    "db:test": "bash infra/db/tests/run.sh",
+    "modules:check": "node tools/check-modules.mjs"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.9.0"
+  }
+}

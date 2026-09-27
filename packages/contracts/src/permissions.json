@@ -1,0 +1,50 @@
+[
+  {
+    "key": "audit.events.view",
+    "module": "audit",
+    "description": "Ver eventos de auditoría del laboratorio",
+    "requiresReason": false
+  },
+  {
+    "key": "audit.chain.verify",
+    "module": "audit",
+    "description": "Verificar la integridad de la cadena de auditoría",
+    "requiresReason": false
+  },
+  {
+    "key": "configuration.branches.view",
+    "module": "configuration",
+    "description": "Ver sucursales",
+    "requiresReason": false
+  },
+  {
+    "key": "configuration.branches.create",
+    "module": "configuration",
+    "description": "Crear sucursales",
+    "requiresReason": false
+  },
+  {
+    "key": "configuration.branches.update",
+    "module": "configuration",
+    "description": "Modificar sucursales",
+    "requiresReason": false
+  },
+  {
+    "key": "configuration.branches.deactivate",
+    "module": "configuration",
+    "description": "Desactivar sucursales",
+    "requiresReason": true
+  },
+  {
+    "key": "security.users.view",
+    "module": "security",
+    "description": "Ver usuarios",
+    "requiresReason": false
+  },
+  {
+    "key": "security.roles.view",
+    "module": "security",
+    "description": "Ver roles y permisos",
+    "requiresReason": false
+  }
+]
