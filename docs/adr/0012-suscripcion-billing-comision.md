@@ -25,3 +25,10 @@
 ## Consecuencias
 
 Mitiga el riesgo R-06. La etapa de suscripción existe desde F2, antes de cualquier operación comercial.
+
+## D-02 — Identidad del plan (revisión 2)
+
+- Cada plan tiene un UUID inmutable y un código técnico estable (`free`, `pro`, `enterprise`).
+- El nombre visible (`FREE` inicialmente) es un dato de presentación: traducible y editable desde la consola.
+- Suscripciones, comisiones, estados de cuenta y auditoría referencian **plan + versión**, nunca el nombre.
+- Ninguna regla compara nombres. Las capacidades se leen de los *features* y límites del plan.

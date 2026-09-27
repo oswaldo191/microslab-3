@@ -34,6 +34,20 @@ Requisito obligatorio: controlar los compromisos de entrega de resultados hechos
 - **Prioridad operacional:** se calcula en el backend con el tiempo restante, el estado, el TAT, el tipo de estudio, la prioridad clínica y el retraso. Se muestra con icono y texto, no solo con color.
 - Los eventos `delivery.*` alimentan `automation` y `analytics`.
 
-## Pendiente
+## Definición consolidada
 
-El requisito llegó cortado desde la sección 11, "Entregas en riesgo" (D-12). No se infiere su contenido.
+La definición completa está en [RESULT_DELIVERY_CALENDAR.md](../architecture/RESULT_DELIVERY_CALENDAR.md). Cada punto lleva la marca de su origen. Incluye:
+
+- Entregas en riesgo y atrasadas;
+- reprogramación con versiones;
+- confirmación de entrega;
+- notificaciones;
+- métricas de cumplimiento;
+- integraciones.
+
+Reglas que conviene tener a la vista:
+
+- OVERDUE significa que pasó la hora prometida y el resultado **no está listo**. Un resultado READY no retirado no es OVERDUE.
+- **No es la Agenda de Citas.**
+
+D-12 queda cerrada. El texto original posterior al corte no se recuperó.

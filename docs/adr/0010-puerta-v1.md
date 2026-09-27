@@ -14,14 +14,14 @@ El paquete pre-F1 dejó pendiente qué parte de Calidad es imprescindible para V
   - incidentes de bioseguridad;
   - SOP críticos con versión, aprobación, firma electrónica y lectura obligatoria;
   - tablero básico de calidad.
-- **Propuesta (D-01):** una fase F7B "V1 Readiness" reúne:
-  - Quality V1 mínimo;
-  - la consola Super Admin necesaria para operar;
-  - la certificación e-CF;
-  - el piloto.
-- La Puerta V1 se cruza cuando un laboratorio piloto opera en producción con e-CF aceptados y Quality V1 mínimo.
+- **Dónde se construye Quality V1 mínimo (revisión 2, C-25):**
+  - en F5: temperaturas, incidentes de bioseguridad y SOP críticos;
+  - en F6: IQC básico y tablero básico.
+- **Consola Super Admin de V1 (C-26):** se construye en F2 y F7.
+- **Propuesta (D-01):** F7B "V1 Readiness" es una fase de **preparación, sin módulos ni pantallas nuevas**. Incluye integración de extremo a extremo, QA, seguridad, migración y operación, certificación e-CF en producción, capacitación y piloto.
+- La Puerta V1 se cruza al cumplir los criterios de salida de F7B ([informe](../architecture/ARCHITECTURE_FREEZE.md), sección 35.1).
 - Quality I (F11) y Quality II (F13) quedan después de V1 (ADR 0015).
 
 ## Estado de las partes
 
-El contenido de Quality V1 queda aceptado por la especificación maestra. La ubicación de la puerta sigue pendiente de D-01.
+El contenido de Quality V1 lo define la especificación maestra. Esta ADR sigue en **Propuesta** hasta la aprobación del Freeze, igual que la ubicación de la puerta (D-01).

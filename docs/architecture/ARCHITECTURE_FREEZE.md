@@ -1,6 +1,6 @@
 # MICROSLAB 3.0 Enterprise — Architecture Freeze Report (pre-F1)
 
-**Estado:** propuesto para aprobación · 27 de septiembre de 2026
+**Estado:** EN REVISIÓN — no aprobado · 27 de septiembre de 2026 (revisión 2: Calendario de Entregas y Work Center completos, D-01 a D-04 analizadas, roadmap F0–F7B verificado)
 **Frase de aprobación requerida:** `ARCHITECTURE FREEZE APPROVED — START F1`
 
 Este informe consolida la especificación maestra *MICROSLAB 3.0 ENTERPRISE — Master Architecture Freeze* con la arquitectura ya
@@ -15,11 +15,12 @@ Nada de este informe es código funcional, migración, tabla ni pantalla. El có
 | Tema | Resultado |
 | --- | --- |
 | Principios innegociables | Se conservan todos los de F0 y se agregan multi-moneda, multi-idioma y observabilidad como preparación obligatoria |
-| Contradicciones encontradas | 24 (sección 0), 19 resueltas aplicando la especificación maestra, 5 con propuesta que necesita tu decisión |
+| Contradicciones encontradas | 26 (sección 0): 19 resueltas aplicando la especificación maestra, 7 con propuesta que necesita tu decisión (C-13, C-15, C-17, C-25, C-26 y las decisiones D-01 a D-04) |
 | Módulos | 55 propuestos (38 registrados en F0 + 11 ya documentados + 6 nuevos), `einvoicing` interno y no visible |
 | Roadmap | Se adopta el orden de la especificación maestra con 4 ajustes por dependencia (catálogo y ARS antes de órdenes; PDF y entregas antes de V1; fase de preparación V1; ubicación de la Puerta V1) |
-| Decisiones pendientes | 19 (sección 35); ninguna bloquea F1 salvo D-01 a D-04 |
-| ADR | 0001–0004 vigentes (0001 y 0003 con adenda); 0005–0024 nuevas en `docs/adr` |
+| Decisiones pendientes | D-01 a D-04 analizadas con recomendación (sección 35.1); D-05 en adelante en la lista final (sección 35.2); D-12 y D-13 cerradas con definición arquitectónica |
+| ADR | 0001–0004 aprobadas (adendas de 0001 y 0003 propuestas); 0005–0024 en estado **Propuesta** |
+| Documentos de detalle | [Calendario de Entregas](RESULT_DELIVERY_CALENDAR.md) · [Work Center](WORK_CENTER.md) |
 
 ---
 
@@ -42,7 +43,7 @@ Nada de este informe es código funcional, migración, tabla ni pantalla. El có
 | C-13 | Roadmap: catálogo clínico y ARS | F2 catálogo, F3 pacientes y ARS | No aparecen antes de F3 | **Propuesta:** F3 incluye catálogo y ARS porque una orden no existe sin estudios ni coberturas |
 | C-14 | Roadmap: Caja | F4, antes de muestras y resultados | F7, después de resultados | Adoptado; mientras tanto las órdenes existen sin cobro en ambientes de prueba |
 | C-15 | Roadmap: PDF, entrega, QR | F7 | QR/portales en F16; PDF y entrega sin fase explícita | **Propuesta:** PDF clínico, verificación QR mínima, registro de entregas y Result Delivery Calendar en F6, porque el flujo clínico no cierra sin ellos |
-| C-16 | Calidad para V1 | Decisión pendiente (sección 13 del paquete pre-F1) | V1 exige IQC básico, temperaturas, incidentes de bioseguridad, SOP críticos y tablero básico | Adoptado; ADR 0010 pasa a aceptada |
+| C-16 | Calidad para V1 | Decisión pendiente (sección 13 del paquete pre-F1) | V1 exige IQC básico, temperaturas, incidentes de bioseguridad, SOP críticos y tablero básico | Contenido adoptado de la especificación; ADR 0010 sigue en **Propuesta** hasta tu aprobación |
 | C-17 | Ubicación de la Puerta V1 | Tras F10 (consola SaaS) | No se indica | **Propuesta:** fase F7B "V1 Readiness" y Puerta V1 al cerrarla (D-01) |
 | C-18 | HR | Puestos dentro de `training` (calidad) | Dominio HR propio | Adoptado: `hr` es dueño de empleados, puestos, departamentos y contratos; `training` usa sus datos (D-04 confirma el reparto) |
 | C-19 | Analytics y BI | Un solo módulo `analytics` | Separados | Adoptado: `analytics` (operación) y `bi` (dirección) |
@@ -50,6 +51,8 @@ Nada de este informe es código funcional, migración, tabla ni pantalla. El có
 | C-21 | Work Center | Centrado en el bioanalista | Sample-centric y multi-centro (8 centros) | Adoptado: el Work Center pasa a ser el motor de colas de todos los centros |
 | C-22 | Offline | Operacional frente a fiscal | Operational Offline, Fiscal Contingency, Network Failure, Technical Failure | Adoptado (sección 26) |
 | C-23 | Design System | Valores de Figma con contraste señalado | Figma es la fuente visual; si choca con accesibilidad, gana accesibilidad | Adoptado: variante accesible del botón de confirmación (sección 31) |
+| C-25 | Dónde se construye Quality V1 mínimo | Revisión 1 de este informe: dentro de F7B | F7B debe ser preparación, no una fase funcional grande (tu revisión del 27/09) | **Propuesta (cambio de fase señalado):** registros de temperatura, incidentes de bioseguridad y SOP críticos en F5 (centro Quality del Work Center); IQC básico con bloqueo de liberación y tablero básico en F6 |
+| C-26 | Dónde se construye la consola Super Admin de V1 | Revisión 1: dentro de F7B | Mismo motivo | **Propuesta (cambio de fase señalado):** provisión, suscripción y acceso de soporte en F2; billing, comisiones y Mantenimiento Fiscal de plataforma en F7 |
 | C-24 | Registro de módulos en código | `packages/contracts/src/modules.ts` registra 38 módulos con fases antiguas | 55 módulos y roadmap nuevo | Se actualiza en el primer commit de F1, después de la aprobación; no se toca ahora |
 
 ---
@@ -111,7 +114,7 @@ Preparación obligatoria que se agrega al marco (sin implementarla ahora):
 
 | Módulo | Dominio | Estado en el registro | Fase propuesta |
 | --- | --- | --- | --- |
-| `platform` | Core / SaaS | F0 | F2 (provisión) · F7B (consola V1) |
+| `platform` | Core / SaaS | F0 | F2 (provisión, suscripción, acceso de soporte) · F7 (billing y comisiones en consola) |
 | `security` | Core | F0 | F1 |
 | `configuration` | Core | F0 | F1 (Configuration Engine) · F2 (sucursales) |
 | `audit` | Core | F0 (motor listo) | F1 (visor) |
@@ -144,7 +147,7 @@ Preparación obligatoria que se agrega al marco (sin implementarla ahora):
 | `logistics` | Operations | **Nuevo** | F17+ (transporte de muestras entre sucursales) |
 | `analytics` | Intelligence | F0 | F10 (Operations Center y analítica operativa) |
 | `bi` | Intelligence | **Nuevo** | F17+ |
-| `doccontrol` · `logbooks` · `quality` · `biosafety` | Quality | Documentados; `biosafety` **nuevo** | F7B (mínimo V1) · F11 · F13 |
+| `doccontrol` · `logbooks` · `quality` · `biosafety` | Quality | Documentados; `biosafety` **nuevo** | F5–F6 (mínimo V1) · F11 · F13 |
 | `training` · `internal-audits` · `capa` · `compliance` · `equipment` · `reagents` | Quality | Documentados | F11 · F13 |
 | `hr` | HR | **Nuevo** | F12 |
 | `automation` | Intelligence | **Nuevo** | F14 |
@@ -366,25 +369,42 @@ solo ocurre si existe un nodo fiscal local con llave protegida; si no, la venta 
 - **Áreas preparadas:** Hematology, Chemistry, Immunology, Hormones, Microbiology, Uroanalysis, Coprology, Coagulation, Serology, Toxicology, Molecular, Blood Bank, Imaging y áreas propias.
 - **Resultados:** manual, automático, calculado, derivado, corregido; formula engine, delta check, valores críticos, repetición, retención del original, historial, validación técnica y profesional; una corrección nunca destruye el valor anterior.
 - **TAT Engine:** marca toma, recepción, procesamiento, resultado, validación y entrega; SLA por estudio y prioridad, alertas, retrasos, tableros y analítica.
-- Experiencia detallada: paquete de diseño pre-F1, sección 6; la sección 29 del documento original ("Menos clics") llegó incompleta (D-13).
+- Definición consolidada, incluida la sección 29 "Menos clics" completada con el análisis de clics, pantallas y campos por operación: [WORK_CENTER.md](WORK_CENTER.md). Cierra D-13.
 
-### Result Delivery Calendar (nuevo requisito obligatorio)
+### Result Delivery Calendar (requisito obligatorio)
 
-Módulo `delivery`, separado de la agenda de pacientes:
+Módulo `delivery` (F6). **No es la Agenda de Citas:** es un sistema de compromisos operativos para la entrega de resultados.
+Definición completa, con la marca de origen de cada punto: [RESULT_DELIVERY_CALENDAR.md](RESULT_DELIVERY_CALENDAR.md). Cierra D-12.
 
-- **Compromiso de entrega** por orden o estudio: fecha y hora prometidas, fecha estimada, fecha y hora de entrega, tipo, responsable, sucursal, prioridad, canal y estado.
-- **Estados del compromiso:** PROMISED, IN_PROGRESS, READY, DELIVERED, OVERDUE, CANCELLED, RESCHEDULED; independientes del estado del resultado (un resultado IN_VALIDATION puede tener un compromiso PROMISED para hoy a las 4:00 PM).
-- **Calendario:** hoy, mañana, semana, mes, fecha específica; por día: pacientes pendientes, listos, por validar, atrasados y entregados.
-- **Lista del día:** paciente, identificación, orden, estudios, sucursal, médico, fecha y hora prometidas, estado del resultado y de la entrega, canal, responsable, prioridad; agrupada en listos, pendientes, atrasados y entregados.
-- **Alerta de resultado no listo:** el backend compara hora actual, hora prometida y estado real; niveles INFORMACIÓN, WARNING, URGENTE, OVERDUE con umbrales configurables (p. ej., 24 h, 12 h, 4 h, 2 h, 30 min), nunca fijos en código.
-- Las alertas aparecen en Work Center, Mi Trabajo, tablero, Operations Center, Calendario de Entregas y pantalla de resultados; la prioridad operacional combina tiempo restante, estado, TAT, tipo de estudio, prioridad clínica y retraso; se muestra con icono y texto, no solo color.
-- Filtros: fecha, sucursal, área, laboratorio, médico, responsable, estado, prioridad, tipo de estudio, canal, paciente.
-- Pendiente: la sección 11 ("Entregas en riesgo") y siguientes llegaron cortadas (D-12).
+- **Compromiso** por orden o estudio: fecha y hora prometidas, fecha estimada (TAT), fecha y hora real de entrega, tipo, responsable, sucursal, prioridad, canal y estado.
+- **Estados:** PROMISED, IN_PROGRESS, READY, DELIVERED, OVERDUE, CANCELLED y RESCHEDULED.
+  - Son independientes del estado del resultado.
+  - OVERDUE significa que pasó la hora y el resultado **no está listo**.
+  - Un resultado READY no retirado no es OVERDUE.
+- **Reprogramación:** crea una versión nueva, con motivo e historial. Nada se sobrescribe.
+- **Riesgo de incumplimiento:** el backend compara la hora actual, la hora prometida, el estado real y la hora estimada de listo (TAT Engine).
+- **Alertas:** INFO, WARNING, URGENT y OVERDUE, con umbrales configurables (D-08).
+  - Aparecen en Work Center, Mi Trabajo, el tablero, Operations Center (F10), el Calendario y la pantalla de resultados.
+  - Se muestran con icono y texto, no solo con color.
+- **Vistas:**
+  - Calendario (día, semana, mes, fecha);
+  - Entregas de Hoy;
+  - Pacientes para una fecha;
+  - Entregas en riesgo;
+  - Entregas atrasadas;
+  - detalle con historial.
+- **Confirmación de entrega:** es un comando auditado. Solo se entrega un informe liberado.
+- **Notificaciones:** al personal y al paciente, sin valores clínicos.
+- **Métricas de cumplimiento:** en `analytics`.
+- **Integraciones:** Orders, Patients, Work Center, Results, Documents, Notifications, Automation (F14) y Portals (F16).
 
 ## 18. Quality architecture
 
 - Preparada para Ministerio de Salud Pública y acreditación estilo ISO 15189; sin requisitos legales inventados; reglas regulatorias configurables y versionadas (`compliance`, `regulatory_references`).
-- **V1 mínimo obligatorio** (fase F7B, antes de la Puerta V1): IQC básico diario (corrida, reglas básicas, bloqueo de liberación configurable), registros de temperatura, incidentes de bioseguridad, SOP críticos con versión, aprobación, firma electrónica y lectura obligatoria, tablero básico de calidad.
+- **V1 mínimo obligatorio**, construido antes de la Puerta V1 y dentro de las fases funcionales (C-25):
+  - en F5 (centro Quality del Work Center): registros de temperatura, incidentes de bioseguridad, y SOP críticos con versión, aprobación, firma electrónica y lectura obligatoria;
+  - en F6: IQC básico diario (corrida, reglas básicas, bloqueo de liberación configurable) y tablero básico de calidad.
+  - F7B solo lo verifica en el piloto.
 - **Quality I (F11):** control documental completo (código, nombre, categoría, versión, creador, aprobador, fechas, estados Draft / In Review / Approved / Obsolete, PDF, Word, firma, auditoría; nunca se sobrescribe un aprobado), manuales, bitácoras restantes, capacitación ligada a HR, checklist de cumplimiento, calendario.
 - **Quality II (F13):** EQC, CAPA completo, auditorías internas completas, gestión de riesgos, competencias, acreditación, equipos y reactivos completos, tablero avanzado.
 - `biosafety` (nuevo): incidentes, exposiciones, cortopunzantes y gestión de desechos (manifiestos y retiros), con acceso restringido por tratarse de datos de salud del personal.
@@ -402,7 +422,7 @@ por movimiento de ajuste). Detalle en la sección 19 de la arquitectura.
 
 - `security.users` enlaza opcionalmente a un empleado (no todo usuario es empleado, p. ej., soporte).
 - `training` (calidad) usa puestos y empleados de `hr` para exigir lecturas, cursos y competencias; el expediente de calidad del empleado es una vista sobre `hr` + `training` (D-04).
-- Hasta F12, `training` y los SOP críticos de V1 usan el rol del usuario como puesto provisional.
+- Hasta F12, `training` y los SOP críticos de V1 usan el rol del usuario como puesto provisional. En F12, un comando auditado crea los empleados a partir de los usuarios y mapea roles a puestos (sección 35.1, D-04).
 
 ## 21. Agenda architecture
 
@@ -517,11 +537,11 @@ Se adopta el orden de la especificación maestra. Los ajustes por dependencia es
 | F2 | Core: tenants (provisión desde consola), sucursales, usuarios, roles, matriz de permisos, estado de suscripción y su etapa en la tubería | La suspensión debe existir antes que cualquier operación comercial |
 | F3 | Pacientes, órdenes, muestras (toma e identificación) **+ catálogo clínico y ARS (ajuste)** | Una orden requiere estudios, precios y coberturas |
 | F4 | Work Center Foundation (centros, colas, prioridades, vistas, asignaciones) | Requiere muestras |
-| F5 | Work Center Operations (recepción, TAT Engine, escaneo, supervisor, turnos) | Requiere F4 |
-| F6 | Resultados, captura, validación **+ PDF clínico, QR de verificación mínimo, registro de entregas y Result Delivery Calendar (ajuste)** | El flujo clínico no cierra sin documento y entrega |
+| F5 | Work Center Operations (recepción, TAT Engine, escaneo, supervisor, turnos) **+ Quality V1: temperaturas, incidentes de bioseguridad, SOP críticos (ajuste C-25)** | Requiere F4; el centro Quality es uno de los 8 centros |
+| F6 | Resultados, captura, validación **+ PDF clínico, QR de verificación mínimo, registro de entregas y Result Delivery Calendar (ajuste) + Quality V1: IQC básico y tablero básico (ajuste C-25)** | El flujo clínico no cierra sin documento y entrega; el IQC bloquea liberación |
 | F7 | Caja y Facturación + `einvoicing` + Mantenimiento Fiscal + Billing, Subscription y Commission Engines; CxC y reclamaciones ARS | Requiere órdenes, ARS y suscripción |
-| F7B | **V1 Readiness (ajuste):** Quality V1 mínimo, consola Super Admin para operar V1, certificación e-CF, piloto | Puerta V1 |
-| **Puerta V1** | Laboratorio piloto en producción con e-CF aceptados y Quality V1 mínimo (D-01) | |
+| F7B | **V1 Readiness (ajuste):** preparación, integración, QA, seguridad, migración/operación, certificación e-CF y piloto. **Sin módulos nuevos** (C-25, C-26) | Puerta V1 |
+| **Puerta V1** | Criterios de salida de F7B (sección 35.1, D-01) | |
 | F8 | Inventory, Purchasing, Suppliers (+ CxP, aprobaciones, gastos y centros de costo) | Consumo por prueba requiere catálogo |
 | F9 | Agenda Enterprise (+ agenda de imágenes) | Requiere pacientes, recursos y sucursales |
 | F10 | Operations Center / Analytics | Requiere eventos de los módulos operativos |
@@ -532,6 +552,57 @@ Se adopta el orden de la especificación maestra. Los ajustes por dependencia es
 | F15 | Report / Form / PDF / Label Builders | Reemplazan plantillas fijas de F6–F7 |
 | F16 | Portals / QR completo / External APIs y webhooks | Requiere contratos estables |
 | F17+ | Integraciones de equipos, integraciones avanzadas, IA clínica, voz, BI, presupuestos y costos, domicilio, logística, modo sin conexión (si no se adelanta), expansión regional | Cada una con su piloto |
+
+### 33.1 Roadmap verificado F0 → F7B (camino a V1)
+
+**Cambios de fase respecto a la revisión 1 de este informe** (los únicos que se hicieron):
+
+- **C-25:** Quality V1 mínimo pasa de F7B a F5 y F6.
+- **C-26:** la consola Super Admin de V1 pasa de F7B a F2 y F7.
+- **F7B redefinida** como fase de preparación.
+
+Además se mantienen, respecto a la especificación maestra, los ajustes ya señalados en la revisión 1:
+
+- **C-13:** catálogo clínico y ARS en F3.
+- **C-15:** PDF, QR mínimo, entregas y Calendario en F6.
+- **C-17:** existencia de F7B.
+
+Ninguna otra fase cambió.
+
+| Fase | Objetivo | Depende de | Módulos que entran | Entregables obligatorios | ¿Bloquea V1? |
+| --- | --- | --- | --- | --- | --- |
+| **F0** | Fundaciones técnicas + Architecture Freeze | — | kernel, `audit` (motor), registro de módulos | Hecho: RLS forzado, auditoría encadenada, outbox, idempotencia, secuencias, tubería, verificador de fronteras. Este informe aprobado | Sí (hecho; falta la aprobación) |
+| **F1** | Security + Design System + Application Foundations | F0 | `security`, `configuration` (Configuration Engine), `audit` (visor), `notifications` (in-app), `search`, `workspace`; kernel `esign` | Autenticación, MFA, sesiones, dispositivos, AppShell, Design System en código, Configuration Engine con jerarquía y rollback, `Ctrl + K`, i18n y moneda preparados, observabilidad base, **registro de los 55 módulos** (C-24), adenda de auditoría (`client_time`, `offline`, `provider`) | Sí |
+| **F2** | Core: tenants, sucursales, usuarios, roles, permisos, suscripción | F1 | `platform`, `configuration` (sucursales), `security` (roles y matriz), `billing` (estado de suscripción) | Provisión de laboratorios desde la consola, sucursales, usuarios, roles plantilla, matriz de permisos, estados ACTIVE, GRACE_PERIOD, SUSPENDED y CANCELLED, etapa de suscripción en la tubería con operaciones esenciales (D-06), acceso de soporte auditado, planes FREE, PRO y ENTERPRISE como datos (D-02) | Sí |
+| **F3** | Pacientes, órdenes, muestras (toma e identificación) + catálogo clínico y ARS | F2 | `catalog`, `rules-engine` (definición), `insurance` (coberturas), `patients`, `orders`, `samples` | Catálogo con versiones y precios, coberturas ARS, pacientes, órdenes, toma e identificación de muestras, etiquetas fijas | Sí |
+| **F4** | Work Center Foundation | F3 | `workcenter` | Centros, worklists, ítems, asignaciones, políticas de prioridad configurables, vistas guardadas, estructura de Mi Trabajo | Sí |
+| **F5** | Work Center Operations + Quality V1 (parte operativa) | F4 | `workcenter`, `samples` (recepción, custodia), `logbooks`, `biosafety`, `doccontrol` (mínimo) | Recepción por escaneo, contexto de muestra, TAT Engine, supervisor, turnos, reasignación. **Quality V1:** temperaturas, incidentes de bioseguridad, SOP críticos con firma y lectura obligatoria | Sí |
+| **F6** | Resultados, validación, documento y entrega + Quality V1 (IQC) | F5 | `results`, `validation`, `rules-engine` (evaluación, críticos, delta), `documents` (PDF clínico, QR mínimo), `delivery`, `quality` (IQC básico) | Entrada individual y masiva, fórmulas, delta, críticos, repeticiones, validación técnica y profesional, PDF, QR, **Result Delivery Calendar**, notificaciones por correo y WhatsApp, **IQC básico con bloqueo** y tablero básico de calidad | Sí |
+| **F7** | Caja y Facturación + e-CF + Billing | F6 (orden y resultado), F3 (ARS), F2 (suscripción) | `cashier`, `einvoicing`, `receivables`, `insurance` (reclamaciones y glosas), `billing`, `commissions`, `reports` (base) | Caja y Facturación con sus pestañas, solicitud fiscal a `einvoicing`, primer conector fiscal (D-03) en sandbox y certificación, Mantenimiento Fiscal, contingencias, Billing Engine, Subscription Engine, Commission Engine, CxC, reclamaciones ARS, reportes base | Sí |
+| **F7B** | **V1 Readiness** (sin módulos nuevos) | F1–F7 | — | Integración de extremo a extremo, QA de regresión, pruebas de carga, seguridad (pruebas de aislamiento por módulo, revisión externa), migración de datos del piloto si aplica, operación (monitoreo, alertas, respaldos y restauración probados, RPO/RTO de D-09, runbooks, simulacro de contingencia fiscal), certificación e-CF en producción, capacitación y piloto | Sí: su cierre **es** la Puerta V1 |
+
+### 33.2 Dónde queda cada dominio pedido
+
+| Dominio | Fase | ¿Antes de V1? |
+| --- | --- | --- |
+| Work Center | F4 (foundation) · F5 (operations) · F6 (resultados y validación) | Sí |
+| Calendario de Entregas (`delivery`) | F6. Panel en Operations Center en F10, reglas en Automation en F14 y canal portal en F16 | Sí (F6) |
+| Caja y Facturación / e-CF (`cashier`, `einvoicing`) | F7; certificación en producción en F7B | Sí |
+| Quality V1 mínimo | F5 y F6 (C-25) | Sí |
+| Quality I | F11 | No (después de V1) |
+| Quality II | F13 | No |
+| HR | F12 | No. Hasta entonces, rol como puesto provisional |
+| Automation Engine | F14 | No |
+| Clinical AI | F17+ | No. Sujeto a D-15 |
+| BI | F17+ | No |
+| Operations Center / Analytics | F10 | No |
+
+### 33.3 Qué bloquea V1
+
+- Todas las fases F0 a F7B terminadas con sus entregables obligatorios.
+- La aprobación de este Freeze.
+- Las decisiones D-01 a D-04, más las que bloquean fases previas a V1: D-06, D-07, D-08, D-09, D-10, D-11, D-19, D-20 y D-22.
+- Los criterios de salida de F7B (sección 35.1, D-01).
 
 ## 34. Risks
 
@@ -546,7 +617,9 @@ Se adopta el orden de la especificación maestra. Los ajustes por dependencia es
 | R-07 | Colas atascadas (fiscal, notificaciones, outbox) | Entregas o e-CF tardíos | Monitoreo de profundidad y edad, alertas, circuit breaker |
 | R-08 | Alcance de V1 demasiado grande (55 módulos preparados) | Retraso | Esqueletos sin funcionalidad; solo F1–F7B construyen |
 | R-09 | Figma incompleto o inaccesible | Pantallas sin referencia | Design System como contrato; contraste pendiente en D-17 |
-| R-10 | Requisitos que llegan cortados (Work Center §29, Delivery Calendar §11) | Diseño incompleto | Registrados como D-12 y D-13; nada se infiere |
+| R-10 | Requisitos que llegan cortados (Work Center §29, Delivery Calendar §11) | Diseño incompleto | Completados solo con material existente y con marca de origen; lo propio va marcado [P]; si aparece el texto original, se compara |
+| R-15 | F7B crece con trabajo funcional pendiente | Puerta V1 tardía y sin control | F7B sin módulos ni pantallas nuevas; lo pendiente vuelve a su fase (D-01) |
+| R-16 | El proveedor fiscal exige custodiar el certificado | Llave fuera del control de MicroSlab | Decisión explícita D-22, contrato, auditoría de uso y rotación |
 | R-11 | Datos de salud a terceros (IA, WhatsApp, proveedor fiscal) | Legal y reputacional | Sin envío hasta decisión explícita; minimización de datos; acuerdos con proveedores |
 | R-12 | Modo sin conexión con conflictos no resueltos | Datos duplicados | Idempotencia, bandeja de conflictos, alcance limitado a Caja, Recepción y Órdenes |
 | R-13 | HR y Calidad duplican datos de personal | Inconsistencia | `hr` como dueño único (D-04) |
@@ -554,27 +627,119 @@ Se adopta el orden de la especificación maestra. Los ajustes por dependencia es
 
 ## 35. Open decisions
 
+### 35.1 D-01 a D-04 — análisis y recomendación
+
+#### D-01 — Puerta V1
+
+| ID | Decisión | Propuesta | Impacto | Dependencias | Riesgo | Recomendación arquitectónica |
+| --- | --- | --- | --- | --- | --- | --- |
+| D-01 | Dónde se cruza la Puerta V1 | Al cerrar F7B "V1 Readiness" | Define qué es V1 y cuándo un laboratorio opera en producción. Obliga a sacar de F7B toda construcción funcional (C-25, C-26) | F1–F7 completos; D-03 (conector certificado); D-09 (RPO/RTO); D-10 (nube); laboratorio piloto disponible | Que F7B crezca con "lo que faltó" y se vuelva una fase funcional; certificación e-CF lenta (R-02) | **Aprobar.** F7B no admite módulos ni pantallas nuevas: lo que falte se devuelve a su fase y la puerta espera |
+
+**Qué debe estar terminado antes de cruzarla (criterios de salida de F7B):**
+
+1. F1 a F7 cerrados con sus entregables obligatorios (sección 33.1) y cero defectos críticos o altos abiertos.
+2. Flujo clínico completo en el piloto: orden → muestra → Work Center → resultado → validación → PDF/QR → entrega registrada en el Calendario.
+3. **e-CF en producción:** emisor certificado, primeros e-CF del piloto aceptados, contingencia de conectividad ensayada, Reconciliation Center sin diferencias.
+4. **Quality V1 mínimo en uso:** IQC diario con bloqueo configurado, registros de temperatura, incidentes de bioseguridad, SOP críticos leídos por el personal y tablero básico.
+5. **Seguridad:**
+   - pruebas de aislamiento de tenant en todos los módulos de V1;
+   - revisión de seguridad externa;
+   - MFA activo en los roles obligatorios;
+   - llaves de firma en el gestor de llaves (ADR 0009).
+6. **Operación:**
+   - monitoreo y alertas de colas (fiscal, notificaciones, outbox);
+   - respaldo y restauración probados contra RPO/RTO (D-09);
+   - runbooks de incidentes y de contingencia fiscal;
+   - soporte y acceso de soporte auditado.
+7. **Migración:** si el piloto trae datos de otro sistema, migración ensayada y conciliada. Si no, se declara "sin migración".
+8. **Suscripción:** el piloto opera con su plan, estado de cuenta y comisión calculada sobre cobros reales. La suspensión fue probada sin afectar lo clínico.
+9. **Personas:** capacitación del personal del piloto y un período de operación con criterios de aceptación firmados por el laboratorio. La duración propuesta es 2 semanas y la decides en la aprobación.
+
+**Confirmación:** F7B **no es una fase funcional grande**. Es una fase de preparación, integración, QA, seguridad, migración y operación, y de *readiness*. No registra módulos nuevos ni crea pantallas nuevas.
+
+#### D-02 — Plan gratuito
+
+| ID | Decisión | Propuesta | Impacto | Dependencias | Riesgo | Recomendación arquitectónica |
+| --- | --- | --- | --- | --- | --- | --- |
+| D-02 | Nombre del plan gratuito | `FREE` | Nombre visible en la consola, el estado de cuenta, los correos y el portal | Configuration Engine (F1), `billing` y `platform` (F2), i18n (F1) | Bajo. Solo sería un problema si el código o las comisiones dependieran del nombre | **Aprobar `FREE` como nombre inicial**, con estas reglas |
+
+- El plan tiene un **identificador interno inmutable** (UUID) y un **código técnico estable** (`free`, `pro`, `enterprise`).
+- El **nombre visible** es un dato de presentación, traducible por idioma y editable desde la consola.
+- Las suscripciones, comisiones, estados de cuenta y la auditoría referencian **plan + versión**, nunca el nombre.
+- Renombrar no crea una versión de precio ni altera el historial. Cambiar precio, comisión o límites sí crea una versión nueva (ADR 0012).
+- Ninguna regla de negocio compara nombres de plan. Las capacidades se leen de los *features* y límites del plan.
+
+#### D-03 — Primer conector fiscal
+
+| ID | Decisión | Propuesta | Impacto | Dependencias | Riesgo | Recomendación arquitectónica |
+| --- | --- | --- | --- | --- | --- | --- |
+| D-03 | Primer conector fiscal | Proveedor autorizado para V1; DGII directo después | Define el primer adaptador que se construye en F7, el proceso de certificación y el costo por documento | Interfaz `FiscalGateway` (F7); selección del proveedor concreto (D-20); custodia del certificado (D-22); ADR 0009 | Dependencia comercial del proveedor; que el proveedor exija custodiar el certificado del laboratorio; estados externos distintos a los internos | **Aprobar**, sin implementar ningún conector ahora |
+
+Arquitectura de adaptadores preparada (solo diseño):
+
+| Adaptador | Uso | Fase |
+| --- | --- | --- |
+| `AUTHORIZED_PROVIDER` (instancias `PROVIDER_A`, `PROVIDER_B`, …) | Emisión por proveedor autorizado por la DGII | F7 (el primero) |
+| `DGII_DIRECT` | Emisión directa con certificación propia del emisor | Posterior a V1 |
+| `SANDBOX` | Simulador determinista para pruebas, CI y capacitación; nunca en producción | F7 |
+| Futuros | Nuevos proveedores o cambios normativos | Cuando se decidan |
+
+- **Puerto único:** `FiscalGateway`, con las operaciones `submit`, `status`, `void`, `healthcheck` y `capabilities`.
+- **Capacidades por adaptador:** quién firma, formatos, límites y modalidad de contingencia. Se consultan en tiempo de ejecución; no se asumen.
+- **Mapeo versionado** del estado externo al interno, uno por adaptador (ADR 0008). Se guardan siempre `external_status` y la respuesta cruda.
+- El adaptador se elige por **configuración fiscal del emisor y ambiente**, desde Mantenimiento Fiscal. Cambiar de adaptador es un comando con motivo, auditoría y doble autorización (D-07).
+- **Afinidad:** un documento termina su ciclo en el adaptador que lo transmitió. Solo los documentos nuevos usan el adaptador nuevo.
+- **Cambiar de proveedor no altera el dominio fiscal ni Caja y Facturación.** `cashier` solo conoce `fiscal_requests` e `invoice_fiscal_links`. Los estados internos, secuencias, contingencias, reconciliación y permisos de `einvoicing` son los mismos con cualquier adaptador.
+- **Custodia del certificado:** si el proveedor elegido firma con el certificado del laboratorio, la llave queda bajo custodia contractual del proveedor. Esa es una excepción a ADR 0009 que decides en D-22. MicroSlab nunca la expone en frontend, logs ni API.
+
+#### D-04 — RR. HH. frente a Calidad
+
+| ID | Decisión | Propuesta | Impacto | Dependencias | Riesgo | Recomendación arquitectónica |
+| --- | --- | --- | --- | --- | --- | --- |
+| D-04 | Quién es dueño de los datos del personal | `hr` dueño de empleados, puestos, estructura laboral y datos maestros; Calidad los consume | Evita duplicar personas entre `hr`, `training`, `biosafety` y `logbooks`. Define el expediente del empleado | `security` (usuario ↔ empleado), `doccontrol`, `training`, `biosafety`, `esign` | Antes de F12 no existe `hr`: riesgo de que Calidad cree su propio registro de personas | **Aprobar**, con el reparto y la regla de transición siguientes |
+
+| Dato | Dueño | Quién lo consume |
+| --- | --- | --- |
+| Empleado, cédula, contacto laboral, estado (activo o baja), historial | `hr` | Todos, por `employee_id` |
+| Puestos, departamentos, estructura, contratos, ausencias y permisos laborales | `hr` | `training`, `workcenter` (turnos), `analytics` |
+| Formación académica, licencias, exequátur, certificados y sus vencimientos | `hr` (credenciales del expediente) | `training`, `compliance` (alertas de vencimiento) |
+| Requisitos de capacitación por puesto, cursos, lecturas de SOP, evaluaciones de competencia y evidencias | `training` (Calidad) | `hr` (vista de solo lectura en el expediente), auditorías internas |
+| Firma electrónica | Kernel `esign`, ligada al **usuario** (`security`) | Todos los módulos |
+| Exposiciones e incidentes que afectan a una persona | `biosafety` (acceso restringido; datos de salud) | `hr` solo ve que existe el registro, no su contenido |
+
+- **Nadie duplica personas.** Los demás módulos guardan `employee_id` o `user_id`, nunca nombre, cédula ni puesto copiados.
+- `security.users` enlaza a un empleado de forma opcional. No todo usuario es empleado (por ejemplo, soporte o auditores externos), y no todo empleado es usuario.
+- **Hasta F12:** Quality V1 (F5–F6) usa `user_id` y el **rol como puesto provisional**. Una persona afectada que no es usuario se registra como texto en `biosafety`.
+- **En F12:** un comando auditado crea empleados desde los usuarios, mapea roles a puestos y enlaza los registros existentes. No se borra nada.
+- **La especificación maestra lista "formación" y "competencias" en HR** (sección 40). La propuesta las reparte así: `hr` guarda las credenciales formales del expediente y `training` guarda las evaluaciones y evidencias de competencia, porque son registros de calidad. Se señala como interpretación para tu aprobación.
+- **Dependencias:**
+  - `hr` → `security`, `configuration`;
+  - `training` → `hr`, `doccontrol`;
+  - `biosafety` → `hr` (desde F12), `logbooks`;
+  - `compliance` → `hr` (vencimientos).
+
+### 35.2 Lista final de decisiones pendientes D-05 en adelante
+
 | ID | Decisión | Propuesta | Bloquea |
 | --- | --- | --- | --- |
-| D-01 | Dónde va la Puerta V1 | Tras F7B (V1 Readiness) | Planificación de V1 |
-| D-02 | Nombre del plan gratuito | FREE (de la especificación) | F2 |
-| D-03 | Primer conector fiscal: DGII directo o proveedor autorizado | Proveedor autorizado para V1 (menos certificación propia), DGII directo después | F7 |
-| D-04 | Reparto HR / Calidad del personal | `hr` dueño de personas y puestos; `training` dueño de requisitos y evidencias | F11–F12 |
 | D-05 | Fase del modo sin conexión | F17+, adelantable si el piloto lo exige | — |
-| D-06 | Lista exacta de operaciones esenciales durante suspensión | La de la sección 7 | F2 |
-| D-07 | Qué acciones fiscales exigen doble autorización | Cambio de certificado, cambio de ambiente a producción, cambio de proveedor, Emergency Mode | F7 |
-| D-08 | Umbrales iniciales de alertas de entrega | 24 h, 4 h, 1 h y vencido (configurables) | F6 |
-| D-09 | Retención de datos, RPO y RTO | Pendiente desde la arquitectura | F2 |
+| D-06 | Lista exacta de operaciones esenciales durante la suspensión | La de la sección 7 | F2 |
+| D-07 | Qué acciones fiscales exigen doble autorización | Cambio de certificado, paso a producción, cambio de proveedor o adaptador, Emergency Mode | F7 |
+| D-08 | Umbrales iniciales de alertas de entrega | INFO 24 h; WARNING 12 h y 4 h; URGENT 2 h y 30 min; OVERDUE al vencer (ejemplo del requisito) | F6 |
+| D-09 | Retención de datos, RPO y RTO | Pendiente desde la arquitectura | F2 (retención) · F7B (prueba) |
 | D-10 | Nube y región | Pendiente desde la arquitectura | F1 (infraestructura) |
 | D-11 | Contenido del QR clínico y del QR fiscal | QR clínico: código + hash; QR fiscal: el que exija la norma | F6, F7 |
-| D-12 | Resto del requisito Result Delivery Calendar (desde §11 "Entregas en riesgo") | Enviar el texto completo | F6 |
-| D-13 | Resto del documento del Work Center (desde §29 "Menos clics") | Enviar el texto completo | F4 |
+| D-12 | ~~Resto del requisito Result Delivery Calendar~~ | **Cerrada:** definición completada con material existente ([RESULT_DELIVERY_CALENDAR.md](RESULT_DELIVERY_CALENDAR.md)); el texto original posterior al corte no se recuperó | — |
+| D-13 | ~~Resto del documento del Work Center~~ | **Cerrada:** sección 29 completada con el análisis que pedía ([WORK_CENTER.md](WORK_CENTER.md)) | — |
 | D-14 | Monedas y fuente de tasas de cambio | Solo preparación; RD$ en V1 | — |
 | D-15 | Proveedor de IA y condiciones de privacidad | Pendiente | F17+ |
 | D-16 | Proveedor de voz | Pendiente | F17+ |
 | D-17 | Contraste de pantallas de Figma | Completar con más cuota de Figma | Diseño de pantallas |
 | D-18 | Alcance de `logistics` | Transporte de muestras entre sucursales y a laboratorios de referencia | F17+ |
 | D-19 | Acciones permitidas en Fiscal Emergency Mode | Solo contención (sección 15) | F7 |
+| D-20 | **Nueva:** proveedor autorizado concreto | Evaluar autorización DGII, API, sandbox, SLA, contingencia, custodia del certificado, residencia de datos y costo | F7 |
+| D-21 | **Nueva:** entregas parciales de resultados | Permitidas si el laboratorio lo habilita (el compromiso se divide) | F6 |
+| D-22 | **Nueva:** custodia del certificado si el proveedor firma | Excepción contractual a ADR 0009 o proveedor que permita firmar en MicroSlab | F7 |
 
 ## 36. Assumptions
 
@@ -618,11 +783,29 @@ Se adopta el orden de la especificación maestra. Los ajustes por dependencia es
 
 ---
 
+## Verificación del Freeze (revisión 2)
+
+| Verificación | Resultado |
+| --- | --- |
+| Código funcional nuevo | Ninguno |
+| Migraciones nuevas | Ninguna |
+| Tablas nuevas | Ninguna (los nombres de tablas son conceptuales) |
+| Pantallas funcionales nuevas | Ninguna |
+| Cambios al código de F0 | Ninguno (`packages/contracts/src/modules.ts` intacto; se actualiza en F1, C-24) |
+| Implementación de e-CF, HR, Delivery Calendar o Work Center | Ninguna |
+| Qué cambió | Solo `docs/architecture/*.md` y `docs/adr/*.md` en la rama `docs/architecture-freeze`; Design System (artefacto) y notas en los documentos de arquitectura |
+| Estado de ADR 0005–0024 | **Propuesta** |
+| Merge a `main` | No realizado |
+
 ## Quality gate antes de F1
 
 | Punto | Estado |
 | --- | --- |
-| Architecture Freeze terminado | Listo para revisión |
+| Architecture Freeze terminado | Revisión 2 lista para revisión |
+| Calendario de Entregas completo | [RESULT_DELIVERY_CALENDAR.md](RESULT_DELIVERY_CALENDAR.md) — pendiente de aprobación |
+| Work Center completo (sección 29) | [WORK_CENTER.md](WORK_CENTER.md) — pendiente de aprobación |
+| D-01 a D-04 | Sección 35.1 — pendiente de aprobación |
+| Roadmap F0–F7B | Sección 33.1 — pendiente de aprobación |
 | Domain map · Module map · Dependency graph | Secciones 2, 3, 4 — pendiente de aprobación |
 | Tenant isolation · Security model | Secciones 5, 6 — pendiente de aprobación |
 | Billing · Subscription · Commission | Secciones 10, 11, 12 — pendiente de aprobación |
@@ -630,6 +813,6 @@ Se adopta el orden de la especificación maestra. Los ajustes por dependencia es
 | Work Center · Quality V1 · HR · Agenda · Automation · Builders | Secciones 17, 18, 20, 21, 22, 28 — pendiente de aprobación |
 | Analytics/BI separados · Clinical AI · Offline · Portals · Equipment Connector | Secciones 23–27 — pendiente de aprobación |
 | Design System · Navigation · Roadmap | Secciones 31–33 — pendiente de aprobación |
-| ADRs actualizados | 0005–0024 escritas; 0001 y 0003 con adenda |
+| ADRs actualizados | 0005–0024 escritas en estado Propuesta; 0001 y 0003 con adenda propuesta |
 
 F1 no empieza hasta recibir exactamente: **ARCHITECTURE FREEZE APPROVED — START F1**.

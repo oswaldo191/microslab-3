@@ -19,3 +19,7 @@
 ## Consecuencias
 
 Mitiga el riesgo R-03. La infraestructura (D-10) debe ofrecer un gestor de llaves antes de F7.
+
+## Pendiente (D-22)
+
+Si el proveedor autorizado de V1 firma con el certificado del laboratorio, la llave queda bajo custodia contractual del proveedor. Esa excepción a esta ADR requiere tu decisión explícita. Aun así, la llave nunca pasa por el frontend, los logs ni la API de MicroSlab.

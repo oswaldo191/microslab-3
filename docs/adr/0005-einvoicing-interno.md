@@ -25,3 +25,13 @@ Desde el 1 de noviembre de 2026 los Grandes Locales y Medianos solo pueden emiti
 - Una sola implementación fiscal sirve para Caja, CxC, notas de crédito y débito, y la factura de MicroSlab.
 - El cajero nunca recibe permisos `einvoicing.*`.
 - Los estados deben validarse contra la documentación oficial vigente antes de F7 (riesgo R-01).
+
+## D-03 — Adaptadores (revisión 2, sin implementar)
+
+- **Puerto único:** `FiscalGateway`, con las operaciones `submit`, `status`, `void`, `healthcheck` y `capabilities`.
+- **Adaptadores:** `AUTHORIZED_PROVIDER` (instancias `PROVIDER_A`, `PROVIDER_B`, …), `DGII_DIRECT`, `SANDBOX` (simulador para pruebas y CI, nunca en producción) y futuros.
+- **Propuesta para V1:** un proveedor autorizado. DGII directo queda para después de V1. El proveedor concreto es D-20.
+- **Elección del adaptador:** por configuración fiscal del emisor y ambiente. Cambiarlo es un comando con motivo, auditoría y doble autorización.
+- **Afinidad:** un documento termina su ciclo en el adaptador que lo transmitió.
+- **Mapeo:** hay un mapeo versionado del estado externo al interno por adaptador.
+- **Cambiar de proveedor no altera el dominio fiscal ni Caja y Facturación.**

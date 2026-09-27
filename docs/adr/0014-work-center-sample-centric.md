@@ -13,6 +13,6 @@
 - **TAT Engine:** marca cada hito y compara contra el SLA por estudio y prioridad.
 - Una corrección de resultado nunca destruye el valor anterior.
 
-## Pendiente
+## Definición consolidada
 
-La sección 29 del documento original llegó incompleta (D-13). No se infiere su contenido.
+La definición completa está en [WORK_CENTER.md](../architecture/WORK_CENTER.md). Incluye la sección 29 "Menos clics", completada con el análisis de clics, pantallas y campos que esa sección pedía, sin requisitos nuevos. D-13 queda cerrada.
