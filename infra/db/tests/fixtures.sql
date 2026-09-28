@@ -1,4 +1,4 @@
--- Datos de prueba: dos laboratorios con sus sucursales y usuarios.
+-- Datos de prueba: laboratorios con sus sucursales y usuarios.
 -- Se cargan como microslab_owner; como RLS está forzado también para el dueño,
 -- hay que fijar el contexto de cada laboratorio antes de insertar.
 
@@ -23,4 +23,29 @@ INSERT INTO app.branches (id, code, name) VALUES
   ('00000000-0000-7000-8000-0000000000b1', 'B1', 'Sucursal B1');
 INSERT INTO app.users (id, email, full_name) VALUES
   ('00000000-0000-7000-8000-0000000000bb', 'admin@lab-b.test', 'Admin B');
+COMMIT;
+
+-- F1.3: laboratorios en los demás estados operativos (decisión M de F1.2), cada uno con un
+-- usuario activo. La aplicación no puede escribir en platform.laboratories, por eso van aquí.
+INSERT INTO platform.laboratories (id, code, subdomain, legal_name, trade_name, status) VALUES
+  ('00000000-0000-7000-8000-00000000000c', 'LAB-C', 'lab-c', 'Laboratorio C SRL', 'Laboratorio C', 'suspended'),
+  ('00000000-0000-7000-8000-00000000000d', 'LAB-D', 'lab-d', 'Laboratorio D SRL', 'Laboratorio D', 'closed'),
+  ('00000000-0000-7000-8000-00000000000e', 'LAB-E', 'lab-e', 'Laboratorio E SRL', 'Laboratorio E', 'onboarding');
+
+BEGIN;
+SELECT set_config('app.laboratory_id', '00000000-0000-7000-8000-00000000000c', true);
+INSERT INTO app.users (id, email, full_name) VALUES
+  ('00000000-0000-7000-8000-0000000000cc', 'admin@lab-c.test', 'Admin C');
+COMMIT;
+
+BEGIN;
+SELECT set_config('app.laboratory_id', '00000000-0000-7000-8000-00000000000d', true);
+INSERT INTO app.users (id, email, full_name) VALUES
+  ('00000000-0000-7000-8000-0000000000dd', 'admin@lab-d.test', 'Admin D');
+COMMIT;
+
+BEGIN;
+SELECT set_config('app.laboratory_id', '00000000-0000-7000-8000-00000000000e', true);
+INSERT INTO app.users (id, email, full_name) VALUES
+  ('00000000-0000-7000-8000-0000000000ee', 'admin@lab-e.test', 'Admin E');
 COMMIT;
