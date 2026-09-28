@@ -1,0 +1,60 @@
+# F1 — Auditoría de F0 y plan técnico de ejecución
+
+**Estado:** F1 iniciada el 27/09/2026 con la aprobación `ARCHITECTURE FREEZE APPROVED — START F1` (Freeze v2.2).
+**Rama:** `f1/security-foundations`, creada desde `docs/architecture-freeze` (el Freeze aprobado todavía no está en `main`). Sin merge ni PR hasta que se autoricen.
+
+## 1. Auditoría del estado real de F0
+
+| Área | Qué existe hoy | Qué falta para F1 |
+| --- | --- | --- |
+| Instalación | `packageManager: pnpm@10.28.0`, Node 22 (`.nvmrc`), workspace `apps/*` y `packages/*`. **No hay `pnpm-lock.yaml`.** CI usa `pnpm install --no-frozen-lockfile` | Lockfile versionado; CI con `--frozen-lockfile` y caché de pnpm (F1-TD-01) |
+| Kernel | Tubería de comandos: módulo → permiso → motivo → Zod → transacción con idempotencia, manejador, auditoría y outbox. Auditoría encadenada SHA-256, outbox con dispatcher, secuencias e idempotencia, contexto RLS por `set_config` local | Se conserva intacto. Solo cambia de dónde salen los permisos y las sucursales del contexto |
+| Base de datos | Migraciones 0001–0005: `platform.laboratories`, `platform.permissions`, `app.branches`, `app.users` (con `password_hash` sin uso), `app.user_branches`, `app.roles` (con `all_branches`), `app.role_permissions`, `app.user_roles`, auditoría, outbox, secuencias, idempotencia. RLS forzado en todas | Tablas de sesiones, refresh tokens, factores MFA, llaves de firma (metadatos) y proyección de autorización efectiva (F1.3–F1.6) |
+| Autenticación | `verifyAccessToken`: JWT **HS256** con `JWT_SECRET` de configuración (≥ 16 caracteres), `aud`/`iss` validados. Claims: `sub`, `lab`, `branches`, `allBranches`, `perms`, `modules`. **No hay endpoint de login, ni sesiones, ni refresh, ni revocación, ni MFA** | F1.2, F1.5, F1.6 |
+| Autorización | `TenantContextMiddleware` resuelve el laboratorio por subdominio, exige que `claims.lab` coincida y **toma permisos, módulos y sucursales del token** (F1-TD-02) | Resolver desde la base: User → Roles → Permissions → Allowed Branches → RLS (F1.3) |
+| Sucursal activa | `x-branch-id` se copia a `activeBranchId` **sin validarse** contra las sucursales permitidas. RLS limita los datos a `app.branch_ids` del token, pero `activeBranchId` se escribe tal cual en `audit_events.branch_id` | Rechazar sucursal no permitida; pruebas de escalamiento (F1.4, F1-TD-04). **Hallazgo:** hoy un usuario podría registrar en la auditoría una sucursal que no le pertenece |
+| Módulos | `modules.ts` registra 38 módulos, con `ai` en la fase 17; `apps/api/src/modules/ai/` es un esqueleto | Registro de 55 módulos (C-24) y rename controlado `ai` → `clinical-ai` (F1.7, F1-TD-05) |
+| Web | `apps/web`: Vite + React 19, `App.tsx` mínimo y `tokens.css` | AppShell y navegación base con el Design System (F1.8) |
+| Pruebas | Unitarias del kernel, integración de la tubería contra PostgreSQL, 6 suites SQL (aislamiento, sucursal, cadena de auditoría, outbox, dispatcher, manipulación) | Pruebas nuevas por bloque; F0 debe seguir en verde |
+
+## 2. Plan de ejecución (orden aprobado)
+
+Cada bloque termina con un reporte de estado y diff. Ningún bloque avanza sin ese reporte.
+
+| Bloque | Entregable | Pruebas mínimas | Cierra |
+| --- | --- | --- | --- |
+| **F1.1** | `pnpm-lock.yaml` versionado; CI con `pnpm install --frozen-lockfile`; caché de pnpm en CI | CI en verde con instalación congelada; `pnpm install --frozen-lockfile` reproducible | F1-TD-01 |
+| **F1.2** | Informe de auditoría de autenticación, sesiones y JWT, con el diseño de F1.3 a F1.6 (sin código) | — | — |
+| **F1.3** | Autorización persistida: resolución de permisos, módulos y sucursales desde la base en cada petición, con caché invalidable por versión. El JWT queda solo como identidad de sesión | Usuario sin rol no puede; revocar un rol surte efecto sin nuevo token; token con `perms` inflados no concede nada; F0 en verde | F1-TD-02 |
+| **F1.4** | `x-branch-id` solo como contexto: se valida contra las sucursales permitidas o se rechaza | Pruebas de ataque: sucursal ajena del mismo laboratorio, sucursal de otro laboratorio, id inválido, sin header; RLS sigue filtrando | F1-TD-04 |
+| **F1.5** | Login, sesiones revocables, refresh con rotación y detección de reutilización, access token corto, firma asimétrica con `kid` y rotación de llaves, secretos solo desde el gestor de secretos o el entorno, bloqueo por intentos | Expiración, revocación, reutilización de refresh, `kid` desconocido, llave rotada, ausencia de secretos en el código | F1-TD-03 |
+| **F1.6** | MFA TOTP con códigos de recuperación; obligatorio para Super Admin, administradores y roles fiscales; reautenticación para acciones sensibles | Login sin segundo factor rechazado donde es obligatorio; códigos de un solo uso; auditoría | — |
+| **F1.7** | Rename controlado `ai` → `clinical-ai` y registro de los 55 módulos (C-24) | Verificador de fronteras; compatibilidad de claves antiguas si existen datos | F1-TD-05 |
+| **F1.8** | AppShell (sidebar de 2 niveles, header, `Ctrl + K` base, pantallas de login y MFA) con el Design System | Accesibilidad básica, teclado, estados de carga y error | — |
+| **F1.9** | Regresión, aislamiento tenant/branch, revisión de seguridad y documentación de F1 | Suite completa en CI | Cierre de F1 |
+
+Toda escritura sigue pasando por la tubería de comandos. RLS, auditoría, idempotencia y outbox no se modifican salvo para agregar lo que exijan estas deudas.
+
+## 3. F1.1 — Estado
+
+### Investigación del 403 del registro de npm
+
+| Prueba | Resultado |
+| --- | --- |
+| `curl https://registry.npmjs.org/prettier` (y `zod`, `@nestjs/core`) | **403**, cuerpo: `Host not in allowlist: registry.npmjs.org. Add this host to your network egress settings to allow access.` |
+| Configuración de npm | Registro oficial (`https://registry.npmjs.org/`), sin `.npmrc` que lo altere |
+| Caché local de pnpm | Vacía (sin paquetes descargados) |
+
+**Conclusión:** el 403 no viene de npm ni de las dependencias del proyecto. Es la **política de salida de red del entorno de trabajo** de esta sesión, que no incluye `registry.npmjs.org` en su lista permitida. No se tocó ninguna dependencia.
+
+**Consecuencia:** desde este entorno no se puede generar el lockfile, ni instalar dependencias, ni compilar o probar TypeScript. Las pruebas SQL sí pueden correr, porque PostgreSQL está instalado localmente. El CI de GitHub sí tiene acceso al registro.
+
+### Opciones para continuar
+
+| Opción | Qué implica | Recomendación |
+| --- | --- | --- |
+| A. Permitir `registry.npmjs.org` en la configuración de red del entorno | Lo hace quien administra el entorno. Desbloquea el lockfile y todas las pruebas locales de F1 | **Recomendada** |
+| B. Generar el lockfile en GitHub Actions | Un workflow manual temporal ejecuta `pnpm install --lockfile-only` con pnpm 10.28.0 y hace commit del lockfile en esta rama. El resto de F1 se prueba solo en CI, con un ciclo más lento | Alternativa si A no es posible |
+| C. Generar el lockfile en tu computadora (`pnpm install`) y subirlo | Depende de tu máquina y de tu versión de pnpm | Menos reproducible |
+
+El cambio de CI (`--frozen-lockfile` y caché de pnpm) se aplica en el mismo commit que el lockfile. Aplicarlo antes rompería el CI.
