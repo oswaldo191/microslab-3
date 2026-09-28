@@ -8,4 +8,4 @@
 - **Pruebas con `node:test`** en el backend (sin dependencias). Vitest queda para el frontend.
 - **ESLint** se agrega en F1 junto con el sistema de diseño; en F0 el estilo lo controla Prettier y las
   fronteras entre módulos `tools/check-modules.mjs`.
-- **Permisos en el token (solo F0)** para probar la tubería. En F1 se resuelven desde los roles en la base.
+- **Permisos en el token (solo F0)** para probar la tubería. En F1 se resuelven desde los roles en la base (F1-TD-02 en el [informe del Freeze](../architecture/ARCHITECTURE_FREEZE.md), sección 38).
