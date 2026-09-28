@@ -18,7 +18,7 @@ Si un documento detallado y la matriz de decisiones difieren, es un error que de
 
 ### ADR
 
-**Una sola ADR nueva es necesaria: `0031-identidad-sesiones-autorizacion.md`.** No se crea todavía. Motivos:
+**Una sola ADR nueva es necesaria: `0031-identidad-sesiones-autorizacion.md`.** Se redacta y aprueba antes de iniciar F1.3. Motivos:
 
 - Cambia una decisión vigente: la ADR 0004 dejó los permisos en el token "solo en F0", y ahora se fija la fuente de verdad definitiva.
 - Define un contrato que heredan todas las aplicaciones cliente: significado del token, transporte de la sesión, 401 frente a 403, desafío MFA.
@@ -26,6 +26,7 @@ Si un documento detallado y la matriz de decisiones difieren, es un error que de
   - **autorización** (base de datos) frente a **habilitación de producto** (registro de módulos en F1, suscripción desde F2);
   - `platform.laboratories.status` frente al estado de suscripción.
 - Define que el actor `platform` no concede privilegios implícitos.
+- Formaliza la modificación del principio de la ADR 0003, según el cual todo cambio de datos se ejecuta mediante `CommandBus`. La decisión N define tres caminos de ejecución cerrados: CommandBus, pipeline de autenticación y runner de infraestructura. La ADR 0003 no se modifica en F1.2.
 
 El resto (algoritmo de contraseñas, factor de MFA, parámetros y el tipo de actor `ai`) son decisiones de implementación. Quedan en `F1_2_DECISIONS.md` y no requieren ADR.
 
@@ -211,12 +212,12 @@ Detalle en `F1_2_AUTHZ.md` §5.
 **F1.2 (diseño) terminado cuando:**
 
 1. Estos cinco documentos estén aprobados, con cada decisión A–N marcada como aprobada, modificada o diferida.
-2. La ADR 0031 esté redactada y aprobada.
-3. La decisión A (alcance del diseño F1.2, sin redefinir F1/F2) esté aprobada.
-4. D-10 **no** es condición para cerrar F1.2. Es condición para el despliegue a producción de F1.5 y F1.6 (§3).
+2. La decisión A (alcance del diseño F1.2, sin redefinir F1/F2) esté aprobada.
+3. D-10 **no** es condición para cerrar F1.2. Es condición para el despliegue a producción de F1.5 y F1.6 (§3).
 
 **F1.3:**
 
+- **Criterio de entrada:** la ADR 0031 (`0031-identidad-sesiones-autorizacion.md`) está redactada y aprobada antes de iniciar la implementación de F1.3.
 - Ningún permiso, sucursal ni laboratorio sale del token (probado con un token inflado y con un `lab` distinto).
 - La habilitación de módulos sale del proveedor estático; un comando legítimo de F1 no se bloquea; un módulo de plan sin habilitar se bloquea aunque haya permiso.
 - Los estados de usuario, rol y laboratorio responden con el código definido.
