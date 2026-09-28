@@ -1,6 +1,6 @@
 # F1.2 — Diseño de seguridad de F1 (documento índice)
 
-**Estado:** BORRADOR en revisión (PR #3). Incluye las correcciones de la revisión técnica del 27/09/2026. No hay código, migraciones ni dependencias.
+**Estado:** DISEÑO CERRADO Y APROBADO (revisión técnica final, 27/09/2026). PR #3 documental. La implementación **no ha comenzado**: F1.3–F1.6 siguen pendientes y cada una requiere autorización propia. No hay código, migraciones ni dependencias.
 **Base:** `main` en `2de3a86`, Architecture Freeze v2.2 y la auditoría de F1.2.
 **Alcance:** diseño de F1.3 (autorización desde la base), F1.4 (contexto de sucursal), F1.5 (JWT, sesiones y hardening) y F1.6 (MFA).
 
