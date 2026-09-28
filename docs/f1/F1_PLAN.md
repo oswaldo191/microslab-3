@@ -1,13 +1,17 @@
 # F1 — Auditoría de F0 y plan técnico de ejecución
 
 **Estado:** F1 iniciada el 27/09/2026 con la aprobación `ARCHITECTURE FREEZE APPROVED — START F1` (Freeze v2.2).
-**Rama:** `f1/security-foundations`, creada desde `docs/architecture-freeze` (el Freeze aprobado todavía no está en `main`). Sin merge ni PR hasta que se autoricen.
+**Rama:** `f1/security-foundations`, creada desde `docs/architecture-freeze`. El Architecture Freeze ya está en `main` mediante el PR #1 (merge commit `8bf561a`). F1 está en el PR #2, abierto y sin merge.
+
+**Estado de los bloques:** F1.1 **completado y validado**. F1.2 a F1.9 **pendientes**.
 
 ## 1. Auditoría del estado real de F0
 
+Esta tabla es la foto de F0 al iniciar F1. Los cambios posteriores se indican en la columna de la derecha.
+
 | Área            | Qué existe hoy                                                                                                                                                                                                                                                                                        | Qué falta para F1                                                                                                                                                        |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Instalación     | `packageManager: pnpm@10.28.0`, Node 22 (`.nvmrc`), workspace `apps/*` y `packages/*`. **No hay `pnpm-lock.yaml`.** CI usa `pnpm install --no-frozen-lockfile`                                                                                                                                        | Lockfile versionado; CI con `--frozen-lockfile` y caché de pnpm (F1-TD-01)                                                                                               |
+| Instalación     | `packageManager: pnpm@10.28.0`, Node 22 (`.nvmrc`), workspace `apps/*` y `packages/*`. **Estado histórico de F0:** no había `pnpm-lock.yaml` y el CI usaba `pnpm install --no-frozen-lockfile`                                                                                                        | **Resuelto en F1.1** (`ea5b9b6`): `pnpm-lock.yaml` versionado y CI con `pnpm install --frozen-lockfile` (F1-TD-01)                                                       |
 | Kernel          | Tubería de comandos: módulo → permiso → motivo → Zod → transacción con idempotencia, manejador, auditoría y outbox. Auditoría encadenada SHA-256, outbox con dispatcher, secuencias e idempotencia, contexto RLS por `set_config` local                                                               | Se conserva intacto. Solo cambia de dónde salen los permisos y las sucursales del contexto                                                                               |
 | Base de datos   | Migraciones 0001–0005: `platform.laboratories`, `platform.permissions`, `app.branches`, `app.users` (con `password_hash` sin uso), `app.user_branches`, `app.roles` (con `all_branches`), `app.role_permissions`, `app.user_roles`, auditoría, outbox, secuencias, idempotencia. RLS forzado en todas | Tablas de sesiones, refresh tokens, factores MFA, llaves de firma (metadatos) y proyección de autorización efectiva (F1.3–F1.6)                                          |
 | Autenticación   | `verifyAccessToken`: JWT **HS256** con `JWT_SECRET` de configuración (≥ 16 caracteres), `aud`/`iss` validados. Claims: `sub`, `lab`, `branches`, `allBranches`, `perms`, `modules`. **No hay endpoint de login, ni sesiones, ni refresh, ni revocación, ni MFA**                                      | F1.2, F1.5, F1.6                                                                                                                                                         |
@@ -23,7 +27,7 @@ Cada bloque termina con un reporte de estado y diff. Ningún bloque avanza sin e
 
 | Bloque   | Entregable                                                                                                                                                                                                                       | Pruebas mínimas                                                                                                                     | Cierra       |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| **F1.1** | `pnpm-lock.yaml` versionado; CI con `pnpm install --frozen-lockfile`; caché de pnpm en CI                                                                                                                                        | CI en verde con instalación congelada; `pnpm install --frozen-lockfile` reproducible                                                | F1-TD-01     |
+| **F1.1** | **Completado.** `pnpm-lock.yaml` versionado; instalación reproducible con `pnpm install --frozen-lockfile`; lockfile validado; CI en verde. Sin caché de pnpm, porque no hace falta para la reproducibilidad                     | CI en verde con instalación congelada; `pnpm install --frozen-lockfile` reproducible                                                | F1-TD-01     |
 | **F1.2** | Informe de auditoría de autenticación, sesiones y JWT, con el diseño de F1.3 a F1.6 (sin código)                                                                                                                                 | —                                                                                                                                   | —            |
 | **F1.3** | Autorización persistida: resolución de permisos, módulos y sucursales desde la base en cada petición, con caché invalidable por versión. El JWT queda solo como identidad de sesión                                              | Usuario sin rol no puede; revocar un rol surte efecto sin nuevo token; token con `perms` inflados no concede nada; F0 en verde      | F1-TD-02     |
 | **F1.4** | `x-branch-id` solo como contexto: se valida contra las sucursales permitidas o se rechaza                                                                                                                                        | Pruebas de ataque: sucursal ajena del mismo laboratorio, sucursal de otro laboratorio, id inválido, sin header; RLS sigue filtrando | F1-TD-04     |
@@ -35,9 +39,21 @@ Cada bloque termina con un reporte de estado y diff. Ningún bloque avanza sin e
 
 Toda escritura sigue pasando por la tubería de comandos. RLS, auditoría, idempotencia y outbox no se modifican salvo para agregar lo que exijan estas deudas.
 
-## 3. F1.1 — Estado
+## 3. F1.1 — Completado y validado
 
-### Investigación del 403 del registro de npm
+| Paso                                | Resultado                                                                                                                                                                                                      |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Restricción del entorno             | El entorno de Claude no tiene acceso al registro de npm (`Host not in allowlist: registry.npmjs.org`). Se eligió la opción de habilitarlo, pero la lista de red no se puede cambiar desde una cuenta personal  |
+| Generación del lockfile             | Fuera de ese entorno, en la computadora del responsable, con pnpm 10.28.0 y `pnpm install --lockfile-only`, sobre la base `0df2a50`. Solo se generó `pnpm-lock.yaml`; ningún `package.json` ni `.npmrc` cambió |
+| Validación contra los manifiestos   | `lockfileVersion: '9.0'`; 4 proyectos del workspace, cada dependencia y rango igual a su `package.json`; 282 paquetes del registro oficial con integridad; `@microslab/contracts` enlazado como `link:`        |
+| Verificación congelada sin conexión | `pnpm install --frozen-lockfile --lockfile-only --offline` con pnpm 10.28.0: pasa sin modificar el lockfile                                                                                                    |
+| Prueba negativa                     | Con un rango cambiado en una copia (`zod ^4.2.0`), la instalación congelada falla con `ERR_PNPM_OUTDATED_LOCKFILE`                                                                                             |
+| Incorporación                       | `pnpm-lock.yaml` y el cambio de CI de `--no-frozen-lockfile` a `--frozen-lockfile`, juntos en `ea5b9b6`                                                                                                        |
+| CI                                  | Pasa con `pnpm install --frozen-lockfile`. Run de referencia: `36365832613` (PR #2)                                                                                                                            |
+
+**Estado:** F1.1 **COMPLETADO / VALIDADO** (cierra F1-TD-01). F1.2 **PENDIENTE**.
+
+### Diagnóstico histórico: 403 del registro de npm
 
 | Prueba                                                               | Resultado                                                                                                                    |
 | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -47,14 +63,13 @@ Toda escritura sigue pasando por la tubería de comandos. RLS, auditoría, idemp
 
 **Conclusión:** el 403 no viene de npm ni de las dependencias del proyecto. Es la **política de salida de red del entorno de trabajo** de esta sesión, que no incluye `registry.npmjs.org` en su lista permitida. No se tocó ninguna dependencia.
 
-**Consecuencia:** desde este entorno no se puede generar el lockfile, ni instalar dependencias, ni compilar o probar TypeScript. Las pruebas SQL sí pueden correr, porque PostgreSQL está instalado localmente. El CI de GitHub sí tiene acceso al registro.
+**Consecuencia (sigue vigente):** desde este entorno el registro de npm continúa inaccesible. No se pueden instalar dependencias, ni compilar o probar TypeScript localmente. Las pruebas SQL sí pueden correr, porque PostgreSQL está instalado localmente. El CI de GitHub sí tiene acceso al registro.
 
-### Opciones para continuar
+Las opciones evaluadas entonces (A: habilitar el registro en el entorno; B: generar el lockfile en GitHub Actions; C: generarlo en una computadora con acceso) quedaron resueltas como se describe en la tabla anterior.
 
-| Opción                                                                  | Qué implica                                                                                                                                                                              | Recomendación                  |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| A. Permitir `registry.npmjs.org` en la configuración de red del entorno | Lo hace quien administra el entorno. Desbloquea el lockfile y todas las pruebas locales de F1                                                                                            | **Recomendada**                |
-| B. Generar el lockfile en GitHub Actions                                | Un workflow manual temporal ejecuta `pnpm install --lockfile-only` con pnpm 10.28.0 y hace commit del lockfile en esta rama. El resto de F1 se prueba solo en CI, con un ciclo más lento | Alternativa si A no es posible |
-| C. Generar el lockfile en tu computadora (`pnpm install`) y subirlo     | Depende de tu máquina y de tu versión de pnpm                                                                                                                                            | Menos reproducible             |
+## 4. Hallazgos operativos del entorno
 
-El cambio de CI (`--frozen-lockfile` y caché de pnpm) se aplica en el mismo commit que el lockfile. Aplicarlo antes rompería el CI.
+- **Prettier 3.8.1**, la misma versión que fija el proyecto, está disponible localmente en `/opt/node-tools`. Sirve para validar el formato sin instalarlo desde el registro de npm. Es un dato operativo de este entorno, **no** una dependencia arquitectónica.
+- **Mantenimiento preventivo futuro (fuera de F1.1; no implementado):**
+  - las acciones `actions/checkout@v4`, `actions/setup-node@v4` y `pnpm/action-setup@v4` declaran Node.js 20, que GitHub marca como obsoleto, y hoy se ejecutan sobre Node.js 24 sin fallos;
+  - `ubuntu-latest` pasará a Ubuntu 26 desde el 19/10/2026; la parte sensible es la instalación de `postgresql-client`.
