@@ -2,7 +2,9 @@
 
 Cada decisión sigue el formato: decisión, problema, opciones, recomendación, impacto, riesgos, alternativas descartadas y fase.
 
-**Ninguna está aprobada ni implementada.** El detalle técnico está en `F1_2_AUTHZ.md`, `F1_2_SESSIONS_JWT.md` y `F1_2_MFA.md`, que deben coincidir con esta matriz.
+**Todas las decisiones A–N están aprobadas** como parte del diseño cerrado de F1.2 y formalizadas, en lo arquitectónico, por la ADR 0031 (aprobada el 28/09/2026). **Ninguna está implementada.** En cada decisión, la **RECOMENDACIÓN** es la opción aprobada. El estado de cada una figura en la tabla "Estado de las decisiones".
+
+El detalle técnico está en `F1_2_AUTHZ.md`, `F1_2_SESSIONS_JWT.md` y `F1_2_MFA.md`, que deben coincidir con esta matriz.
 
 | ID  | Tema                                    | Recomendación resumida                                                                                                   | Fase       |
 | --- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------- |
@@ -20,6 +22,27 @@ Cada decisión sigue el formato: decisión, problema, opciones, recomendación, 
 | L   | Habilitación de módulos en F1           | Proveedor estático basado en el registro; `permissions != enabledModules`                                                | F1.3       |
 | M   | Estado del laboratorio                  | Estado operativo de plataforma, separado de billing                                                                      | F1.3       |
 | N   | Caminos de ejecución y actor `platform` | Tres caminos cerrados; sin atajos por tipo de actor                                                                      | F1.5       |
+
+### Estado de las decisiones
+
+Estados: **APROBADA** (decisión de diseño cerrada) · **IMPLEMENTACIÓN EN F1.x** (bloque que la implementa; ninguno ha comenzado) · **DIFERIDA** (parte que se decide aparte) · **FUTURA** (parte que el Freeze asigna a una fase posterior).
+
+| ID  | Estado   | Implementación                                                     | Partes diferidas o futuras                                                                   |
+| --- | -------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| A   | APROBADA | Ninguna (documental)                                               | DIFERIDA: la reubicación de los elementos de la fila F1 del Freeze que no son de seguridad   |
+| B   | APROBADA | IMPLEMENTACIÓN EN F1.5 (alta del MFA en F1.6)                      | FUTURA: recuperación por correo del propio usuario (F6)                                      |
+| C   | APROBADA | IMPLEMENTACIÓN EN F1.5                                             | FUTURA: migración a Argon2id, cuando se cumplan las condiciones de la decisión               |
+| D   | APROBADA | IMPLEMENTACIÓN EN F1.5 (F1.3 ya ignora los claims de autorización) | Despliegue a producción sujeto a D-10                                                        |
+| E   | APROBADA | IMPLEMENTACIÓN EN F1.5                                             | —                                                                                            |
+| F   | APROBADA | IMPLEMENTACIÓN EN F1.5 (backend) y F1.8 (frontend)                 | Origen de la API en producción sujeto a D-10                                                 |
+| G   | APROBADA | IMPLEMENTACIÓN EN F1.3–F1.6                                        | —                                                                                            |
+| H   | APROBADA | IMPLEMENTACIÓN EN F1.3 (sesión en F1.5, MFA en F1.6)               | —                                                                                            |
+| I   | APROBADA | IMPLEMENTACIÓN EN F1.4                                             | —                                                                                            |
+| J   | APROBADA | IMPLEMENTACIÓN EN F1.6                                             | FUTURA: MFA de usuarios de plataforma, cuando exista su modelo (consola, F2 según el Freeze) |
+| K   | APROBADA | IMPLEMENTACIÓN EN F1.7                                             | —                                                                                            |
+| L   | APROBADA | IMPLEMENTACIÓN EN F1.3                                             | FUTURA: habilitación por plan y suscripción (F2)                                             |
+| M   | APROBADA | IMPLEMENTACIÓN EN F1.3 (solo lectura del estado)                   | FUTURA: comandos que cambian el estado del laboratorio (F2)                                  |
+| N   | APROBADA | IMPLEMENTACIÓN EN F1.5                                             | FUTURA: la consola de plataforma (F2) reemplaza el uso rutinario del runner                  |
 
 ---
 
@@ -276,23 +299,25 @@ Una versión anterior de este documento proponía reubicarlos, lo que podía lee
 
 **RECOMENDACIÓN:**
 
-| HTTP | Código                       | Cuándo                                                                                                                                                                                |
-| ---- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 401  | `UNAUTHENTICATED`            | Sin token                                                                                                                                                                             |
-| 401  | `TOKEN_INVALID`              | Firma, formato, `iss`, `aud` o `kid` inválidos; falta `exp` o `sid`; `lab` distinto al laboratorio resuelto; se presenta algo que no es un access token (por ejemplo, un desafío MFA) |
-| 401  | `TOKEN_EXPIRED`              | `exp` vencido                                                                                                                                                                         |
-| 401  | `SESSION_REVOKED`            | Sesión inexistente, revocada o vencida; usuario inexistente, `invited`, `locked` o `inactive`                                                                                         |
-| 401  | `INVALID_CREDENTIALS`        | Login fallido por cualquier causa (genérico)                                                                                                                                          |
-| 401  | `MFA_REQUIRED`               | Paso del login: contraseña correcta, falta verificar TOTP; se entrega un desafío MFA                                                                                                  |
-| 401  | `MFA_ENROLLMENT_REQUIRED`    | Paso del login: contraseña correcta, un rol exige MFA y no hay factor; se entrega un desafío de alta                                                                                  |
-| 401  | `CHALLENGE_INVALID`          | Desafío MFA inexistente, vencido, consumido o con intentos agotados                                                                                                                   |
-| 401  | `REAUTH_REQUIRED`            | La acción exige reautenticación reciente                                                                                                                                              |
-| 403  | `PERMISSION_DENIED` (existe) | Autenticado, sin el permiso                                                                                                                                                           |
-| 403  | `MODULE_DISABLED` (existe)   | Módulo no habilitado para el laboratorio (decisión L)                                                                                                                                 |
-| 403  | `BRANCH_NOT_ALLOWED`         | `x-branch-id` inexistente, de otro laboratorio, no permitido o inactivo                                                                                                               |
-| 403  | `LABORATORY_UNAVAILABLE`     | Laboratorio `suspended` o `closed` (decisión M)                                                                                                                                       |
-| 400  | `TENANT_REQUIRED` (existe)   | Sin subdominio de laboratorio                                                                                                                                                         |
-| 400  | `BRANCH_CONTEXT_INVALID`     | `x-branch-id` con formato inválido                                                                                                                                                    |
+| HTTP | Código                       | Cuándo                                                                                                                                                                                                                    |
+| ---- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 401  | `UNAUTHENTICATED`            | Sin token                                                                                                                                                                                                                 |
+| 401  | `TOKEN_INVALID`              | Firma, formato, `iss`, `aud` o `kid` inválidos; falta `exp` o `sid`; `lab` distinto al laboratorio resuelto; se presenta algo que no es un access token (por ejemplo, un desafío MFA)                                     |
+| 401  | `TOKEN_EXPIRED`              | `exp` vencido                                                                                                                                                                                                             |
+| 401  | `SESSION_REVOKED`            | Sesión inexistente, revocada o vencida; usuario inexistente, `invited`, `locked` o `inactive`                                                                                                                             |
+| 401  | `INVALID_CREDENTIALS`        | Login fallido por cualquier causa (genérico)                                                                                                                                                                              |
+| 401  | `MFA_REQUIRED`               | En el login: contraseña correcta, falta verificar TOTP; se entrega un desafío MFA. En una petición autenticada: el MFA es requerido y la sesión no tiene `mfa_verified_at`; el usuario debe volver a autenticarse con MFA |
+| 401  | `MFA_ENROLLMENT_REQUIRED`    | Paso del login: contraseña correcta, un rol exige MFA y no hay factor; se entrega un desafío de alta                                                                                                                      |
+| 401  | `CHALLENGE_INVALID`          | Desafío MFA inexistente, vencido, consumido o con intentos agotados                                                                                                                                                       |
+| 401  | `REAUTH_REQUIRED`            | La acción exige reautenticación reciente                                                                                                                                                                                  |
+| 403  | `PERMISSION_DENIED` (existe) | Autenticado, sin el permiso                                                                                                                                                                                               |
+| 403  | `MODULE_DISABLED` (existe)   | Módulo no habilitado para el laboratorio (decisión L)                                                                                                                                                                     |
+| 403  | `BRANCH_NOT_ALLOWED`         | `x-branch-id` inexistente, de otro laboratorio, no permitido o inactivo                                                                                                                                                   |
+| 403  | `LABORATORY_UNAVAILABLE`     | Laboratorio `suspended` o `closed` (decisión M)                                                                                                                                                                           |
+| 400  | `TENANT_REQUIRED` (existe)   | Sin subdominio de laboratorio                                                                                                                                                                                             |
+| 400  | `BRANCH_CONTEXT_INVALID`     | `x-branch-id` con formato inválido                                                                                                                                                                                        |
+
+**Excepción explícita:** `LABORATORY_UNAVAILABLE` responde **403 también en el login**, antes de que exista autenticación. Es deliberado: el rechazo no depende de las credenciales, sino del estado operativo del laboratorio resuelto por el host (decisión M), y un 401 invitaría a reintentar el login. Es la única excepción a la regla "403 = autenticado sin autorización".
 
 **ALTERNATIVAS DESCARTADAS:** todo 403, como hoy.
 
@@ -325,7 +350,7 @@ Petición → laboratorio (host) → identidad (JWT) → usuario → sesión →
 **DECISIÓN:**
 
 - TOTP para usuarios de laboratorio.
-- Es obligatorio si **cualquier** rol activo del usuario lo exige.
+- Es requerido si el usuario tiene un factor MFA activo **o** si **cualquier** rol activo del usuario lo exige.
 - El desafío MFA es un artefacto separado del access token.
 - El MFA de usuarios de plataforma se aplica cuando exista su modelo, con la consola que el Freeze asigna a F2.
 
@@ -411,6 +436,7 @@ Detalle en `F1_2_MFA.md`.
 | `suspended`  | Suspensión **administrativa** decidida por la plataforma: incidente de seguridad, orden legal, incumplimiento contractual grave | 403 `LABORATORY_UNAVAILABLE` | 403 `LABORATORY_UNAVAILABLE` |
 | `closed`     | Laboratorio dado de baja en la plataforma                                                                                       | 403 `LABORATORY_UNAVAILABLE` | 403 `LABORATORY_UNAVAILABLE` |
 
+- **Login:** el 403 en el login es la excepción explícita a la regla de 401/403 descrita en la decisión G.
 - **Sesiones:** `suspended` no las revoca; quedan bloqueadas mientras dure y vuelven a servir si el laboratorio vuelve a `active`. Cerrar un laboratorio revoca sus sesiones. Esa acción es de F2, porque F1 no tiene comandos para cambiar el estado del laboratorio.
 - **Sin lógica de billing en F1.** La suspensión por impago llega en F2 como estado de suscripción, con su lista de operaciones esenciales (D-06).
 
@@ -434,8 +460,8 @@ Detalle en `F1_2_MFA.md`.
 
 **RECOMENDACIÓN:** tres caminos cerrados (`F1_2_DESIGN.md` §5):
 
-1. **CommandBus** para todo lo que hace un usuario autenticado, con permiso de la base.
-2. **Pipeline de autenticación** para una lista fija de puntos de entrada (login, MFA, refresh, logout, activación, cambio de la propia contraseña). Sin permiso de negocio, pero con verificación propia, validación, límite de intentos, transacción con RLS, auditoría e idempotencia donde aplica.
+1. **CommandBus** para toda operación de negocio y administración de un usuario autenticado, con módulo habilitado y permiso de la base.
+2. **Pipeline de autenticación** para una lista fija de puntos de entrada (login, MFA —verificación, alta, desafío de reautenticación, activación voluntaria y regeneración de los propios códigos de recuperación—, refresh, logout, activación, cambio de la propia contraseña). Sin permiso de negocio, pero con verificación propia, validación, límite de intentos, transacción con RLS, auditoría e idempotencia donde aplica.
 3. **Runner de infraestructura** para una lista fija de comandos marcados como de infraestructura, que pasan por el **mismo CommandBus** con actor `platform` y contexto de mínimo privilegio.
 
 **Reglas:**

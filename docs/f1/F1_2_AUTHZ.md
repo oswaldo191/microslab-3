@@ -1,6 +1,6 @@
 # F1.2 — Autorización desde la base, habilitación y contexto de sucursal
 
-Cubre F1.3 (autorización desde la base) y F1.4 (`x-branch-id`). Todo es **propuesta**: no hay código ni migraciones. Corresponde a las decisiones H, I, L y M de `F1_2_DECISIONS.md`.
+Cubre F1.3 (autorización desde la base) y F1.4 (`x-branch-id`). Diseño **aprobado** (F1.2 cerrada; ADR 0031 aprobada el 28/09/2026) y **no implementado**: no hay código ni migraciones. Corresponde a las decisiones H, I, L y M de `F1_2_DECISIONS.md`.
 
 ## 1. Flujo por petición autenticada
 
@@ -16,7 +16,8 @@ Petición HTTP
    ├─ roles         app.user_roles ⋈ app.roles (status = 'active')
    ├─ permisos      app.role_permissions (unión de todos los roles activos)
    ├─ sucursales    app.user_branches ∪ todas las del laboratorio si algún rol activo tiene all_branches
-   ├─ MFA           si ALGÚN rol activo tiene requires_mfa, la sesión debe tener mfa_verified_at     [desde F1.6]
+   ├─ MFA           si el usuario tiene factor MFA activo O algún rol activo tiene requires_mfa,
+   │                la sesión debe tener mfa_verified_at                                            [desde F1.6]
    └─ sucursal activa  x-branch-id validado (sección 4)                                            [F1.4]
 → habilitación     enabledModules desde el proveedor de habilitación (sección 2)
 → TenantContext
@@ -62,21 +63,21 @@ Tener permiso sobre un módulo **no** implica que el módulo esté habilitado. E
 
 ## 3. Casos de estado
 
-| Situación                                                | Resultado                                                                                                                                        | Código                                                              |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| Sin token                                                | Rechazo                                                                                                                                          | 401 `UNAUTHENTICATED`                                               |
-| Token inválido, o `lab` distinto al laboratorio resuelto | Rechazo                                                                                                                                          | 401 `TOKEN_INVALID`                                                 |
-| El usuario (`sub`) no existe en el laboratorio           | Rechazo                                                                                                                                          | 401 `SESSION_REVOKED`                                               |
-| Usuario `inactive`                                       | Rechazo; darlo de baja revoca sus sesiones                                                                                                       | 401 `SESSION_REVOKED`                                               |
-| Usuario `invited`                                        | No puede tener sesión; solo puede activarse                                                                                                      | 401 `SESSION_REVOKED` si presenta un token                          |
-| Usuario `locked`                                         | Rechazo; bloquearlo revoca sus sesiones                                                                                                          | 401 `SESSION_REVOKED` (en el login, `INVALID_CREDENTIALS` genérico) |
-| Laboratorio `onboarding` o `active`                      | Permitido                                                                                                                                        | —                                                                   |
-| Laboratorio `suspended` o `closed`                       | Rechazo                                                                                                                                          | 403 `LABORATORY_UNAVAILABLE`                                        |
-| Sin roles activos                                        | Autenticado, sin permisos: solo puede usar su propia sesión (perfil, logout, cambio de contraseña, MFA). Cualquier comando de negocio se rechaza | 403 `PERMISSION_DENIED`                                             |
-| Un rol activo exige MFA y la sesión no lo verificó       | Rechazo; debe volver a autenticarse con MFA                                                                                                      | 401 `MFA_REQUIRED`                                                  |
-| Sin sucursales y sin `all_branches`                      | Autenticado; `branchIds = []`; RLS no le muestra filas por sucursal                                                                              | 403 `BRANCH_NOT_ALLOWED` si envía `x-branch-id`                     |
-| Rol inactivo                                             | Se ignora en la unión                                                                                                                            | —                                                                   |
-| `x-branch-id` hacia otra sucursal                        | Rechazo                                                                                                                                          | 403 `BRANCH_NOT_ALLOWED`                                            |
+| Situación                                                                                        | Resultado                                                                                                                                        | Código                                                              |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| Sin token                                                                                        | Rechazo                                                                                                                                          | 401 `UNAUTHENTICATED`                                               |
+| Token inválido, o `lab` distinto al laboratorio resuelto                                         | Rechazo                                                                                                                                          | 401 `TOKEN_INVALID`                                                 |
+| El usuario (`sub`) no existe en el laboratorio                                                   | Rechazo                                                                                                                                          | 401 `SESSION_REVOKED`                                               |
+| Usuario `inactive`                                                                               | Rechazo; darlo de baja revoca sus sesiones                                                                                                       | 401 `SESSION_REVOKED`                                               |
+| Usuario `invited`                                                                                | No puede tener sesión; solo puede activarse                                                                                                      | 401 `SESSION_REVOKED` si presenta un token                          |
+| Usuario `locked`                                                                                 | Rechazo; bloquearlo revoca sus sesiones                                                                                                          | 401 `SESSION_REVOKED` (en el login, `INVALID_CREDENTIALS` genérico) |
+| Laboratorio `onboarding` o `active`                                                              | Permitido                                                                                                                                        | —                                                                   |
+| Laboratorio `suspended` o `closed`                                                               | Rechazo                                                                                                                                          | 403 `LABORATORY_UNAVAILABLE`                                        |
+| Sin roles activos                                                                                | Autenticado, sin permisos: solo puede usar su propia sesión (perfil, logout, cambio de contraseña, MFA). Cualquier comando de negocio se rechaza | 403 `PERMISSION_DENIED`                                             |
+| MFA requerido (factor activo del usuario o algún rol activo lo exige) y la sesión no lo verificó | Rechazo; debe volver a autenticarse con MFA                                                                                                      | 401 `MFA_REQUIRED`                                                  |
+| Sin sucursales y sin `all_branches`                                                              | Autenticado; `branchIds = []`; RLS no le muestra filas por sucursal                                                                              | 403 `BRANCH_NOT_ALLOWED` si envía `x-branch-id`                     |
+| Rol inactivo                                                                                     | Se ignora en la unión                                                                                                                            | —                                                                   |
+| `x-branch-id` hacia otra sucursal                                                                | Rechazo                                                                                                                                          | 403 `BRANCH_NOT_ALLOWED`                                            |
 
 ### Significado de `platform.laboratories.status` (decisión M)
 
@@ -127,8 +128,8 @@ La **base de datos es la fuente de verdad**. La sesión se consulta en cada peti
   - usuario (`id`, `status`, `version`);
   - sesión (`id`, `user_id`, `revoked_at`, `idle_expires_at`, `absolute_expires_at`, `mfa_verified_at`, `last_reauth_at`);
   - permisos (`array_agg(DISTINCT permission_key)` de los roles activos);
-  - `bool_or(all_branches)`, `bool_or(requires_mfa)` y las sucursales de `user_branches`.
-- **Consulta 2**, solo si viene `x-branch-id` o el usuario tiene `all_branches`: existencia y estado de la sucursal activa, con el alcance ya fijado.
+  - `bool_or(all_branches)`, `bool_or(requires_mfa)`, si el usuario tiene un factor MFA activo (desde F1.6) y las sucursales de `user_branches`.
+- **Consulta 2**, solo cuando hay una sucursal activa que validar: la enviada en `x-branch-id` o la derivada por el servidor cuando el usuario tiene una sola sucursal permitida y no tiene `all_branches` (§4). Comprueba existencia y estado de esa sucursal, con el alcance ya fijado.
 - **Estado del laboratorio:** sale de la consulta del subdominio que ya existe (`laboratory_directory` expone `status`).
 - **Índices:**
   - Las claves primarias existentes cubren `user_roles`, `role_permissions` y `user_branches`, porque empiezan por `laboratory_id` y el usuario o el rol.

@@ -1,19 +1,21 @@
 # F1.2 — Diseño de MFA (F1.6)
 
-Todo es **propuesta**: no hay código, migraciones ni dependencias. Corresponde a la decisión J de `F1_2_DECISIONS.md`.
+Diseño **aprobado** (F1.2 cerrada; ADR 0031 aprobada el 28/09/2026) y **no implementado**: no hay código, migraciones ni dependencias. Corresponde a la decisión J de `F1_2_DECISIONS.md`.
 
 ## 1. Alcance
 
 | Quién                                                                        | Fase                                                                                             | Motivo                                                  |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
 | Usuarios de laboratorio (`app.users`) con **algún** rol activo que exige MFA | **F1.6**, obligatorio                                                                            | Su modelo existe desde F0                               |
-| Usuarios de laboratorio sin ese rol                                          | **F1.6**, opcional (lo activa el propio usuario)                                                 | Sin costo adicional                                     |
+| Usuarios de laboratorio sin ese rol                                          | **F1.6**, opcional (lo activa el propio usuario); una vez activo, se exige como a los demás      | Sin costo adicional                                     |
 | Super Admin y usuarios de plataforma                                         | Cuando exista su modelo, con la consola que el Freeze asigna a F2; obligatorio desde ese momento | El modelo de usuarios de plataforma **NO EXISTE** en F1 |
 | Portales de paciente y médico                                                | F16                                                                                              | Autenticación propia (ADR 0017)                         |
 
-**Regla de roles:** si **cualquiera** de los roles activos del usuario tiene `requires_mfa = true`, el usuario debe completar el MFA. No depende de un rol "principal", porque un usuario puede tener varios.
+**Regla de MFA requerido:** el MFA es requerido si el usuario tiene un factor MFA activo **o** algún rol activo exige MFA.
 
-- Se evalúa como `bool_or(requires_mfa)` sobre los roles activos, tanto en el login como en cada petición (`F1_2_AUTHZ.md` §1).
+- **Por roles:** basta con que **cualquiera** de los roles activos del usuario tenga `requires_mfa = true`. No depende de un rol "principal", porque un usuario puede tener varios.
+- **Por activación voluntaria:** si el usuario activó su propio factor, el MFA se le exige igual que si un rol lo requiriera.
+- Se evalúa como `factor activo OR bool_or(requires_mfa)` sobre los roles activos, tanto en el login como en cada petición (`F1_2_AUTHZ.md` §1).
 - La plantilla `lab_admin` trae `requires_mfa = true`, y los roles fiscales de F7 también lo tendrán (Freeze §6).
 
 **Aclaración (no cambia el Freeze):** el Freeze exige MFA para Super Admin, pero el modelo de usuarios de plataforma no existe hasta la consola que el Freeze asigna a F2. Por eso F1.6 cubre solo usuarios de laboratorio. La aclaración documental posible está en `F1_2_DESIGN.md` §12.
@@ -34,14 +36,14 @@ El desafío MFA es un **artefacto separado**: representa un intento de autentica
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Cómo se crea               | Solo en el pipeline de autenticación: tras una contraseña correcta (propósito `login` o `enrollment`) o, dentro de una sesión existente, al pedir reautenticación (propósito `reauth`)           |
 | Forma                      | Valor opaco de 256 bits aleatorios, **no es un JWT**. En la base solo se guarda su hash                                                                                                          |
-| Usuario asociado           | `user_id` del usuario que acertó la contraseña                                                                                                                                                   |
+| Usuario asociado           | `user_id` del usuario que acertó la contraseña (`login`, `enrollment`) o del dueño de la sesión que se reautentica (`reauth`)                                                                    |
 | Sesión asociada            | Ninguna en `login` y `enrollment`, porque la sesión aún no existe. En `reauth`, el `session_id` de la sesión que se reautentica                                                                  |
 | Propósito                  | `login`, `enrollment` o `reauth`. Cada endpoint acepta solo su propósito                                                                                                                         |
 | Vinculación con el intento | Guarda el laboratorio (del host), la IP y el agente del intento. Solo se acepta en el mismo laboratorio                                                                                          |
 | Expiración                 | Corta: 5 min                                                                                                                                                                                     |
 | Estado                     | `pending` → `consumed`; o `expired`; o `locked` al agotar los intentos                                                                                                                           |
 | Intentos                   | Máximo 5. Cada fallo cuenta también en `failed_login_count` del usuario                                                                                                                          |
-| Uso único                  | Se consume con `SELECT … FOR UPDATE`: pasa de `pending` a `consumed` en la misma transacción que crea la sesión                                                                                  |
+| Uso único                  | Se consume con `SELECT … FOR UPDATE`: pasa de `pending` a `consumed` en la misma transacción que crea la sesión (en `reauth`, la que actualiza `last_reauth_at`)                                 |
 | Replay y reutilización     | Un desafío `consumed`, `expired` o `locked` recibe 401 `CHALLENGE_INVALID` y queda auditado. No crea sesión                                                                                      |
 | Si expira                  | 401 `CHALLENGE_INVALID`; el usuario debe volver a empezar desde la contraseña                                                                                                                    |
 | Quién lo usa               | Solo los endpoints `/api/v1/auth/mfa/*`. **No se acepta como access token:** presentado como `Bearer`, recibe 401 `TOKEN_INVALID` porque no es un JWT con `typ = at+jwt`                         |
@@ -60,6 +62,8 @@ El desafío MFA es un **artefacto separado**: representa un intento de autentica
    - se emite el refresh;
    - se escribe la auditoría y el evento.
 4. Se devuelven el access JWT y la cookie de refresh.
+
+En `reauth`, el paso 3 no crea sesión: actualiza `last_reauth_at` de la sesión asociada, en la misma transacción.
 
 El desafío **no puede convertirse en sesión sin verificar el TOTP** o un código de recuperación. Ningún otro camino crea una sesión a partir de un desafío.
 
@@ -91,7 +95,7 @@ contraseña correcta → 401 MFA_ENROLLMENT_REQUIRED + desafío (enrollment)
 **Reautenticación:**
 
 - Los comandos que la declaran exigen `last_reauth_at` reciente (5 min); si no, 401 `REAUTH_REQUIRED`.
-- El cliente pide un desafío `reauth` sobre su sesión y lo consume con contraseña o TOTP; se actualiza `last_reauth_at`.
+- El cliente pide un desafío `reauth` sobre su sesión y lo consume con TOTP o un código de recuperación, igual que los demás desafíos (§3); se actualiza `last_reauth_at`. No se crea una sesión nueva.
 - Es una etapa declarada por comando, que la adenda de la ADR 0003 ya anticipa.
 
 **Rol que pasa a exigir MFA:** en la siguiente petición, la resolución ve `bool_or(requires_mfa) = true` y una sesión sin `mfa_verified_at`. Responde 401 `MFA_REQUIRED` y el usuario vuelve a autenticarse con MFA.
@@ -139,7 +143,7 @@ Columna booleana, `false` por defecto.
 - **Índices:** único `(laboratory_id, user_id) WHERE status = 'active'`.
 - **RLS:** aislamiento por laboratorio.
 - **Auditoría:** alta, desactivación y reset.
-- **Actualización:** solo estado y `last_used_step`.
+- **Actualización:** solo `status`, `last_used_step` y las columnas de activación y desactivación (`activated_at`, `disabled_at`, `disabled_by`, `disabled_reason`).
 - **Borrado físico:** no.
 
 ### 6.3 `app.user_recovery_codes`

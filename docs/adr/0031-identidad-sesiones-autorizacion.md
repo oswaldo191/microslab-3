@@ -1,6 +1,6 @@
 # ADR 0031 — Identidad, sesiones y autorización
 
-**Estado:** aprobado · 27 de septiembre de 2026 · aprobada el 28 de septiembre de 2026 · formaliza el diseño aprobado de F1.2. Criterio de entrada de F1.3 (ADR aprobada).
+**Estado:** aprobada · redactada el 27 de septiembre de 2026 · aprobada el 28 de septiembre de 2026 · formaliza el diseño aprobado de F1.2 · es el criterio de entrada de F1.3, que no ha comenzado.
 
 ## Contexto
 
@@ -53,7 +53,7 @@ Su efecto sobre el login y las peticiones autenticadas está definido en F1.2 (d
 
 - **Fuente de verdad:** la sesión vive en la base de datos (`app.user_sessions`) y se consulta en cada petición. Revocarla corta el acceso de inmediato.
 - **Redis:** si se utiliza más adelante, no será la fuente de verdad de la sesión.
-- **Valores aprobados:**
+- **Valores por defecto aprobados** (configurables según F1.2, decisiones D y E; ajustarlos no cambia esta decisión):
 
 | Parámetro                         | Valor      |
 | --------------------------------- | ---------- |
@@ -65,7 +65,8 @@ Su efecto sobre el login y las peticiones autenticadas está definido en F1.2 (d
 - **Refresh:** rota en cada uso, con detección de reutilización. Viaja en una cookie `HttpOnly` host-only, protegida contra CSRF según F1.2.
 - **Semántica de errores:**
   - 401 cuando no hay autenticación válida;
-  - 403 cuando hay autenticación pero falta autorización o habilitación.
+  - 403 cuando hay autenticación pero falta autorización o habilitación;
+  - única excepción explícita: `LABORATORY_UNAVAILABLE` (laboratorio `suspended` o `closed`) responde 403 también en el login, antes de autenticar (decisiones G y M de F1.2).
 
 ### 5. Desafío MFA separado del access token
 
@@ -78,7 +79,7 @@ El desafío MFA:
 - admite **máximo 5 intentos**;
 - se consume de forma segura: bloqueo de la fila y transición atómica en una sola transacción.
 
-**Cuando el MFA es requerido**, porque cualquier rol activo lo exige, **la sesión solo puede crearse después de un MFA válido**. Un desafío nunca se acepta como access token ni concede autorización en la API.
+**Cuando el MFA es requerido**, porque el usuario tiene un factor MFA activo o cualquier rol activo lo exige, **la sesión solo puede crearse después de un MFA válido**. Un desafío nunca se acepta como access token ni concede autorización en la API.
 
 ### 6. Caminos de ejecución y mecanismo de escritura
 
@@ -89,11 +90,11 @@ Esta sección distingue dos conceptos:
 
 Hay **tres caminos de ejecución cerrados** (decisión N de F1.2), pero **solo dos mecanismos de escritura**: el CommandBus y, como excepción enumerada, el pipeline de autenticación.
 
-| Camino de ejecución              | Mecanismo de escritura                          | Qué cubre                                                                                                        |
-| -------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| 1. **CommandBus**                | **CommandBus**                                  | Toda operación de negocio y administración de un usuario autenticado, con módulo habilitado y permiso de la base |
-| 2. **Pipeline de autenticación** | **Pipeline de autenticación** (única excepción) | Solo estos puntos de entrada: login, MFA, refresh, logout, activación y cambio de la propia contraseña           |
-| 3. **Runner de infraestructura** | **CommandBus** (el mismo)                       | Una lista fija de comandos de infraestructura, con contexto de mínimo privilegio                                 |
+| Camino de ejecución              | Mecanismo de escritura                          | Qué cubre                                                                                                                                                                                                                            |
+| -------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. **CommandBus**                | **CommandBus**                                  | Toda operación de negocio y administración de un usuario autenticado, con módulo habilitado y permiso de la base                                                                                                                     |
+| 2. **Pipeline de autenticación** | **Pipeline de autenticación** (única excepción) | Solo estos puntos de entrada: login, MFA (verificación, alta, desafío de reautenticación, activación voluntaria y regeneración de los propios códigos de recuperación), refresh, logout, activación y cambio de la propia contraseña |
+| 3. **Runner de infraestructura** | **CommandBus** (el mismo)                       | Una lista fija de comandos de infraestructura, con contexto de mínimo privilegio                                                                                                                                                     |
 
 - **El CommandBus** sigue siendo el mecanismo central de escritura para las operaciones de negocio y para el runner de infraestructura.
 - **El runner de infraestructura** no es un segundo mecanismo de escritura independiente: es un punto de entrada controlado que ejecuta comandos a través del mismo CommandBus, con las mismas etapas.
@@ -132,8 +133,9 @@ Hay **tres caminos de ejecución cerrados** (decisión N de F1.2), pero **solo d
 
 ## Consecuencias
 
-- Reemplaza la solución provisional de la [ADR 0004](0004-desviaciones-fase-0.md) (permisos en el token) cuando esta ADR se apruebe. La ADR 0004 no se modifica en esta tarea.
-- Todas las aplicaciones cliente heredan el mismo contrato: token, sesión, 401/403 y desafío MFA. Esto incluye la web, la consola de plataforma y los portales.
+- Reemplaza la solución provisional de la [ADR 0004](0004-desviaciones-fase-0.md) (permisos en el token). La sustitución se hace efectiva al implementar F1.3. La ADR 0004 no se modifica en esta tarea.
+- Las aplicaciones internas heredan el mismo contrato: token, sesión, 401/403 y desafío MFA. Esto incluye la web del laboratorio y, cuando exista, la consola de plataforma.
+- Los portales de paciente y médico **no** heredan este contrato: conservan su autenticación propia según la [ADR 0017](0017-portales-independientes.md). Cualquier integración futura entre los portales y este contrato debe respetar la ADR 0017.
 - Cada petición autenticada tiene el costo de una transacción de lectura. No se agrega caché si no se mide la necesidad.
 - **La implementación depende de F1.3–F1.6.** El despliegue a producción de F1.5 y F1.6 depende de D-10 (gestión de secretos y origen de la API), según F1.2.
 - El [Architecture Freeze](../architecture/ARCHITECTURE_FREEZE.md) no se modifica. Esta ADR no amplía el alcance de F1 ni diseña F2: suscripciones, planes, habilitación por suscripción y capacidades de plataforma siguen siendo de F2.

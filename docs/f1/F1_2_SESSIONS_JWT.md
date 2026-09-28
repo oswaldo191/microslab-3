@@ -1,6 +1,6 @@
 # F1.2 — Autenticación, sesiones, JWT e infraestructura
 
-Cubre F1.5. Todo es **propuesta**: no hay código, migraciones ni dependencias. Corresponde a las decisiones B, C, D, E, F, G y N de `F1_2_DECISIONS.md`. El MFA (F1.6) está en `F1_2_MFA.md`.
+Cubre F1.5. Diseño **aprobado** (F1.2 cerrada; ADR 0031 aprobada el 28/09/2026) y **no implementado**: no hay código, migraciones ni dependencias. Corresponde a las decisiones B, C, D, E, F, G y N de `F1_2_DECISIONS.md`. El MFA (F1.6) está en `F1_2_MFA.md`.
 
 ## 1. Pipeline de autenticación
 
@@ -10,16 +10,19 @@ Aun así, **no son un bypass**:
 
 - Forman una **lista cerrada**; no hay más puntos de entrada que estos.
 - No ejecutan comandos de negocio.
-- Ninguno concede más que crear o cerrar la propia sesión.
+- Ninguno actúa sobre otro usuario: solo crean, reautentican o cierran la propia sesión, o gestionan el propio factor MFA.
 
-| Punto de entrada                            | Verificación propia                                                                                | Garantías                                                                                                |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `login`                                     | Laboratorio del host, usuario, contraseña, estado del usuario, estado del laboratorio, MFA exigido | Validación, límite de intentos, transacción con RLS, auditoría y outbox                                  |
-| `mfa/verify`, `mfa/enroll/*`                | Desafío MFA válido + TOTP (`F1_2_MFA.md`)                                                          | Validación, límite de intentos, transacción con RLS, auditoría y outbox                                  |
-| `refresh`                                   | Refresh vigente, no usado, de una sesión activa                                                    | Transacción con RLS, rotación, detección de reutilización, auditoría de anomalías                        |
-| `logout`                                    | Sesión propia (access token + refresh)                                                             | Transacción con RLS, auditoría y outbox                                                                  |
-| `activate`                                  | Token de activación de un solo uso y vigente                                                       | Validación, transacción con RLS, **idempotencia** (el token se consume una sola vez), auditoría y outbox |
-| `password` (cambio de la propia contraseña) | Sesión propia + contraseña actual                                                                  | Validación, límite de intentos, transacción con RLS, auditoría y outbox                                  |
+| Punto de entrada                                           | Verificación propia                                                                                   | Garantías                                                                                                |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `login`                                                    | Laboratorio del host, usuario, contraseña, estado del usuario, estado del laboratorio, MFA exigido    | Validación, límite de intentos, transacción con RLS, auditoría y outbox                                  |
+| `mfa/verify`, `mfa/enroll/*`                               | Desafío MFA válido + TOTP o código de recuperación (`F1_2_MFA.md`)                                    | Validación, límite de intentos, transacción con RLS, auditoría y outbox                                  |
+| `refresh`                                                  | Refresh vigente, no usado, de una sesión activa                                                       | Transacción con RLS, rotación, detección de reutilización, auditoría de anomalías                        |
+| `logout`                                                   | Sesión propia (access token + refresh)                                                                | Transacción con RLS, auditoría y outbox                                                                  |
+| `activate`                                                 | Token de activación de un solo uso y vigente                                                          | Validación, transacción con RLS, **idempotencia** (el token se consume una sola vez), auditoría y outbox |
+| `password` (cambio de la propia contraseña)                | Sesión propia + contraseña actual                                                                     | Validación, límite de intentos, transacción con RLS, auditoría y outbox                                  |
+| Desafío de reautenticación (`reauth`, F1.6)                | Sesión propia activa; el desafío se consume con TOTP o código de recuperación (`F1_2_MFA.md` §3 y §4) | Validación, límite de intentos, transacción con RLS, auditoría y outbox                                  |
+| Activación voluntaria del MFA desde una sesión (F1.6)      | Sesión propia + TOTP de confirmación (`F1_2_MFA.md` §5)                                               | Validación, límite de intentos, transacción con RLS, auditoría y outbox; revoca las demás sesiones       |
+| Regeneración de los propios códigos de recuperación (F1.6) | Sesión propia + reautenticación reciente (`F1_2_MFA.md` §5)                                           | Validación, transacción con RLS, auditoría y outbox; invalida los códigos anteriores                     |
 
 **Garantías comunes:**
 
@@ -33,6 +36,8 @@ Aun así, **no son un bypass**:
 - **Límite de intentos:** por IP y por cuenta, con un almacén de contadores efímeros que nunca es fuente de autorización.
 
 **Qué no pasa por aquí:** las acciones sobre **otros** usuarios, como restablecer credenciales o MFA, revocar sesiones ajenas o cambiar roles. Esas van por el CommandBus con permiso de la base.
+
+Los tres últimos puntos de entrada forman parte del pipeline de autenticación, no del CommandBus, porque solo actúan sobre la propia sesión o el propio factor. **No agregan endpoints nuevos:** se atienden dentro de las rutas `/api/v1/auth/mfa/*` ya previstas en §10, y su forma concreta se fija al implementar F1.6.
 
 ## 2. Access token (decisión D)
 
@@ -59,7 +64,7 @@ Aun así, **no son un bypass**:
 
 ## 3. Sesión (decisión E)
 
-- **Creación:** solo al completar la autenticación, es decir, contraseña más TOTP si algún rol lo exige. Antes de eso **no existe sesión**; existe, como mucho, un desafío MFA.
+- **Creación:** solo al completar la autenticación, es decir, contraseña más TOTP si el MFA es requerido (el usuario tiene un factor MFA activo **o** algún rol activo exige MFA). Antes de eso **no existe sesión**; existe, como mucho, un desafío MFA.
 - **Estados:** `active` → `revoked` (con motivo) o vencida (por inactividad o por límite absoluto).
 - **En cada petición** se comprueba en la base que `sid` pertenece a `sub`, que está activa y que no está vencida (`F1_2_AUTHZ.md` §5). Revocar la sesión corta el access token de inmediato.
 - **Revocación:**
@@ -117,11 +122,11 @@ Aun así, **no son un bypass**:
 
 ```
 POST /auth/login { email, password }
-→ laboratorio del host (onboarding/active; si no, 403 LABORATORY_UNAVAILABLE)
+→ laboratorio del host (onboarding/active; si no, 403 LABORATORY_UNAVAILABLE: excepción explícita de la decisión G)
 → límite de intentos
 → usuario del laboratorio con status 'active' y no bloqueado temporalmente
 → contraseña (scrypt; hash ficticio si el usuario no existe)
-→ ¿algún rol activo exige MFA? → no
+→ ¿MFA requerido? (factor activo o algún rol activo lo exige) → no
 → se crea la sesión → access JWT (cuerpo) + refresh (cookie)
 ```
 
@@ -130,7 +135,7 @@ Cualquier fallo de usuario, contraseña o estado del usuario responde el mismo 4
 **Login con MFA exigido:**
 
 ```
-contraseña correcta → ¿algún rol activo exige MFA? → sí
+contraseña correcta → ¿MFA requerido? (factor activo o algún rol activo lo exige) → sí
 → sin sesión todavía
 → se crea un desafío MFA → 401 MFA_REQUIRED (o MFA_ENROLLMENT_REQUIRED) con el desafío
 → POST /auth/mfa/verify { challenge, code } → TOTP válido
@@ -267,7 +272,7 @@ Las listas de usuarios nunca seleccionan `password_hash`, y la auditoría oculta
   - los parámetros son de plataforma, validados al arrancar, mientras no exista el Configuration Engine previsto en el Freeze.
 - **Bloqueo por intentos:** backoff progresivo (5 fallos → 15 min), más el límite por IP y por cuenta.
 
-## 10. Endpoints propuestos
+## 10. Endpoints previstos
 
 | Método y ruta                                                  | Camino              | Requiere                                | Resultado                                                                                                                           |
 | -------------------------------------------------------------- | ------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
@@ -281,7 +286,7 @@ Las listas de usuarios nunca seleccionan `password_hash`, y la auditoría oculta
 | `GET /api/v1/auth/me`                                          | Lectura autenticada | Access token                            | Usuario, laboratorio, permisos efectivos y sucursales resueltos en la base. Es solo para mostrar; la interfaz nunca decide permisos |
 | Reset de credenciales, reset de MFA, revocar sesiones de otros | CommandBus          | Permiso de la base + motivo             | Según el comando                                                                                                                    |
 
-**Permisos nuevos propuestos para el catálogo:**
+**Permisos nuevos previstos para el catálogo:**
 
 | Permiso                            | ¿Asignable a roles? | Motivo             |
 | ---------------------------------- | ------------------- | ------------------ |
