@@ -4,27 +4,27 @@ Todo es **propuesta**: no hay código, migraciones ni dependencias. Corresponde 
 
 ## 1. Alcance
 
-| Quién                                                                        | Fase                                             | Motivo                                                                         |
-| ---------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------ |
-| Usuarios de laboratorio (`app.users`) con **algún** rol activo que exige MFA | **F1.6**, obligatorio                            | Su modelo existe desde F0                                                      |
-| Usuarios de laboratorio sin ese rol                                          | **F1.6**, opcional (lo activa el propio usuario) | Sin costo adicional                                                            |
-| Super Admin y usuarios de plataforma                                         | **F2**, obligatorio desde el primer día          | El modelo de usuarios de plataforma **NO EXISTE**: llega con la consola (C-26) |
-| Portales de paciente y médico                                                | F16                                              | Autenticación propia (ADR 0017)                                                |
+| Quién                                                                        | Fase                                                                                             | Motivo                                                  |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| Usuarios de laboratorio (`app.users`) con **algún** rol activo que exige MFA | **F1.6**, obligatorio                                                                            | Su modelo existe desde F0                               |
+| Usuarios de laboratorio sin ese rol                                          | **F1.6**, opcional (lo activa el propio usuario)                                                 | Sin costo adicional                                     |
+| Super Admin y usuarios de plataforma                                         | Cuando exista su modelo, con la consola que el Freeze asigna a F2; obligatorio desde ese momento | El modelo de usuarios de plataforma **NO EXISTE** en F1 |
+| Portales de paciente y médico                                                | F16                                                                                              | Autenticación propia (ADR 0017)                         |
 
 **Regla de roles:** si **cualquiera** de los roles activos del usuario tiene `requires_mfa = true`, el usuario debe completar el MFA. No depende de un rol "principal", porque un usuario puede tener varios.
 
 - Se evalúa como `bool_or(requires_mfa)` sobre los roles activos, tanto en el login como en cada petición (`F1_2_AUTHZ.md` §1).
 - La plantilla `lab_admin` trae `requires_mfa = true`, y los roles fiscales de F7 también lo tendrán (Freeze §6).
 
-**Contradicción resuelta:** el Freeze exige MFA para Super Admin, pero ese usuario no existe hasta F2. F1.6 cubre solo usuarios de laboratorio. El ajuste del Freeze está listado en `F1_2_DESIGN.md` §9.
+**Aclaración (no cambia el Freeze):** el Freeze exige MFA para Super Admin, pero el modelo de usuarios de plataforma no existe hasta la consola que el Freeze asigna a F2. Por eso F1.6 cubre solo usuarios de laboratorio. La aclaración documental posible está en `F1_2_DESIGN.md` §12.
 
 ## 2. Factor
 
 - **TOTP** (RFC 6238): SHA-1, 6 dígitos, periodo de 30 s, ventana de ±1 periodo.
 - **Implementación:** con `node:crypto` (HMAC), verificada con los vectores de prueba de la RFC. Sin dependencias.
 - **Anti-replay:** se guarda `last_used_step` y se rechaza un código de ese periodo o de uno anterior.
-- **Secreto:** cifrado en reposo con AES-256-GCM. La llave depende de D-10; mientras tanto viene de variables de entorno o de un archivo de secretos montado. `secret_key_id` permite rotarla.
-- **Descartados:** SMS (intercambio de SIM, costo, proveedor), correo (no existe hasta F6), WebAuthn o passkeys (después de V1).
+- **Secreto:** cifrado en reposo con AES-256-GCM. La llave se carga de variables de entorno o de un archivo de secretos montado, como **solución temporal de diseño**; la gestión definitiva depende de D-10, y esta solución no se lleva a producción sin resolverla (`F1_2_DESIGN.md` §3). `secret_key_id` permite rotarla.
+- **Descartados:** SMS (intercambio de SIM, costo, proveedor), correo (no existe hasta F6), WebAuthn o passkeys (fuera del alcance de F1.2).
 
 ## 3. Desafío MFA (`MFA challenge ≠ access JWT`)
 

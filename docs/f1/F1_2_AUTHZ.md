@@ -89,7 +89,7 @@ Es el **estado operativo de la plataforma**, separado de billing, suscripción, 
 | `suspended`  | Suspensión administrativa de la plataforma (seguridad, orden legal, incumplimiento contractual grave) | Login y peticiones autenticadas: 403 `LABORATORY_UNAVAILABLE`. Las sesiones no se revocan y vuelven a servir si el laboratorio vuelve a `active` |
 | `closed`     | Laboratorio dado de baja en la plataforma                                                             | 403 `LABORATORY_UNAVAILABLE`. La revocación de sus sesiones ocurre al cerrarlo, con un comando de F2                                             |
 
-F1 solo **lee** este estado. Cambiarlo es de F2 (consola de plataforma).
+F1 solo **lee** este estado. Cambiarlo corresponde a la consola de plataforma, que el Freeze asigna a F2.
 
 ## 4. Contrato de `x-branch-id` (F1.4, decisión I)
 
@@ -144,6 +144,6 @@ La **base de datos es la fuente de verdad**. La sesión se consulta en cada peti
   - las sucursales;
   - el estado del laboratorio.
 
-  Si en el futuro se mide la necesidad de caché (`F1_2_DESIGN.md` §7), sería de lectura a través, con TTL acotado y validación por `version`, y la revocación de la sesión se comprobaría siempre en la base.
+  Si en el futuro se mide la necesidad de caché (`F1_2_DESIGN.md` §10), sería de lectura a través, con TTL acotado y validación por `version`, y la revocación de la sesión se comprobaría siempre en la base.
 
 - **Redis:** si se usa en el futuro para esto, **no sustituye** a la base como fuente de verdad. En F1 no se implementa Redis para autorización.

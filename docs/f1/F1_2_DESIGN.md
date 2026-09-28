@@ -6,13 +6,13 @@
 
 ## 0. Mapa de documentos
 
-| Documento               | Qué define                                                                                                                                                                 | Decisiones          |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| `F1_2_DESIGN.md` (este) | Índice, reglas, caminos de ejecución, modelo de datos resumido, amenazas, matriz F1.3–F1.6, compatibilidad, rendimiento, criterios de aceptación y documentos a actualizar | —                   |
-| `F1_2_DECISIONS.md`     | Matriz de decisiones A–N con problema, opciones, recomendación, impacto, riesgos, alternativas descartadas y fase                                                          | Todas               |
-| `F1_2_AUTHZ.md`         | Resolución de la autorización desde la base, habilitación de módulos en F1, estado del laboratorio, contrato de `x-branch-id` y consultas                                  | H, I, L, M          |
-| `F1_2_SESSIONS_JWT.md`  | Caminos de autenticación e infraestructura, access token, sesiones, refresh, CSRF, contraseñas y alta del primer usuario                                                   | B, C, D, E, F, G, N |
-| `F1_2_MFA.md`           | MFA de usuarios de laboratorio, desafío MFA y lo que queda para F2                                                                                                         | J                   |
+| Documento               | Qué define                                                                                                                                                                                                                                                                                    | Decisiones          |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `F1_2_DESIGN.md` (este) | Índice, alcance de F1.2 y frontera con F2, nota de compatibilidad con `F1_PLAN.md`, D-10 como condición de implementación, reglas, caminos de ejecución, modelo de datos resumido, amenazas, matriz F1.3–F1.6, compatibilidad, rendimiento, criterios de aceptación y documentos a actualizar | —                   |
+| `F1_2_DECISIONS.md`     | Matriz de decisiones A–N con problema, opciones, recomendación, impacto, riesgos, alternativas descartadas y fase                                                                                                                                                                             | Todas               |
+| `F1_2_AUTHZ.md`         | Resolución de la autorización desde la base, habilitación de módulos en F1, estado del laboratorio, contrato de `x-branch-id` y consultas                                                                                                                                                     | H, I, L, M          |
+| `F1_2_SESSIONS_JWT.md`  | Caminos de autenticación e infraestructura, access token, sesiones, refresh, CSRF, contraseñas y alta del primer usuario                                                                                                                                                                      | B, C, D, E, F, G, N |
+| `F1_2_MFA.md`           | MFA de usuarios de laboratorio y desafío MFA; el MFA de usuarios de plataforma queda para cuando exista su modelo (consola, F2 según el Freeze)                                                                                                                                               | J                   |
 
 Si un documento detallado y la matriz de decisiones difieren, es un error que debe corregirse. Ninguno prevalece sobre el otro.
 
@@ -29,7 +29,55 @@ Si un documento detallado y la matriz de decisiones difieren, es un error que de
 
 El resto (algoritmo de contraseñas, factor de MFA, parámetros y el tipo de actor `ai`) son decisiones de implementación. Quedan en `F1_2_DECISIONS.md` y no requieren ADR.
 
-## 1. Reglas de arquitectura
+## 1. Alcance de F1.2 y frontera con F2
+
+**F1.2 es un diseño; no redefine el alcance de F1 ni de F2, ni modifica el roadmap del Architecture Freeze.**
+
+| F1.2 diseña                                                              | F2 mantiene (según el Freeze)                                      |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Autenticación                                                            | Administración completa de tenants (provisión desde la consola)    |
+| Sesiones y JWT                                                           | Administración de usuarios                                         |
+| Autorización desde la base                                               | Roles y matriz administrativa de permisos                          |
+| MFA                                                                      | Suscripciones                                                      |
+| Contexto de sucursal                                                     | Planes                                                             |
+| Pipeline de seguridad y runner de infraestructura                        | Billing                                                            |
+| Bootstrap de seguridad (primer administrador)                            | Capacidades de plataforma que el Freeze asigna explícitamente a F2 |
+| Seguridad relacionada con el AppShell (login, MFA, sesión en el cliente) |                                                                    |
+| Contratos necesarios para las fases posteriores de F1                    |                                                                    |
+
+**Reglas de lectura de estos documentos:**
+
+- Las menciones a F2 u otras fases solo describen lo que el Freeze ya asigna a esas fases, o identifican el punto donde este diseño se conecta con ellas. Por ejemplo, la suscripción de F2 implementará la misma interfaz de habilitación.
+- Los elementos de la fila F1 del Freeze que **no** son de seguridad no forman parte de este diseño: Configuration Engine, búsqueda, `workspace`, `esign`, i18n y moneda, observabilidad, registro formal de dispositivos y adenda de auditoría.
+  - **F1.2 no decide su ubicación.** Siguen donde el Freeze los pone.
+  - Cualquier reubicación es una decisión aparte, pendiente de aprobación y de la actualización correspondiente del Freeze (decisión A).
+- No se agregan ni eliminan módulos.
+
+## 2. Nota de compatibilidad con `F1_PLAN.md`
+
+`docs/f1/F1_PLAN.md` describe F1.3 como "resolución de permisos, **módulos** y sucursales desde la base en cada petición, **con caché invalidable por versión**". Esa redacción requiere una alineación documental posterior. `F1_PLAN.md` no se modifica en este cambio.
+
+**Para implementar F1.3, prevalece la decisión L de `F1_2_DECISIONS.md`:**
+
+- `permissions` = base de datos
+- acceso a sucursales = base de datos
+- `enabledModules` = proveedor estático en F1 (registro de módulos); `plan/suscripción → enabledModules` en F2
+- caché: no se implementa; solo se consideraría si se mide la necesidad (§10)
+
+## 3. D-10: condición de implementación, no de diseño
+
+D-10 (nube, región y gestión de secretos) sigue **pendiente**. **No bloquea el diseño de F1.2**, pero sí puede bloquear aspectos de la implementación y, sobre todo, del despliegue a producción de F1.5 y F1.6.
+
+| Aspecto                                                  | Qué define este diseño                                                                                                                               | Qué depende de D-10                                      |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Llave privada de firma del JWT (Ed25519)                 | Almacenamiento **provisional** en variables de entorno o archivo de secretos montado, como solución temporal de diseño para desarrollo, pruebas y CI | La gestión definitiva de secretos                        |
+| Llave de cifrado del secreto TOTP                        | Igual: provisional, con `secret_key_id` para rotarla                                                                                                 | La gestión definitiva de secretos                        |
+| Autenticación del operador del runner de infraestructura | Control de acceso de la infraestructura + lista de operadores                                                                                        | El mecanismo definitivo de acceso operativo              |
+| Origen de la API respecto al frontend                    | Requisito: mismo origen, necesario para la cookie de refresh                                                                                         | Debe quedar definido **antes del despliegue productivo** |
+
+**Esta documentación no autoriza a llevar a producción ninguna solución provisional sin haber resuelto D-10.** No se diseña ni se crea aquí infraestructura ni gestor de secretos.
+
+## 4. Reglas de arquitectura
 
 - **Aislamiento:** PostgreSQL con RLS forzado sigue siendo la autoridad. Toda validación de aplicación se suma a él y nunca lo reemplaza.
 - **Contexto:** `TenantContext` conserva su forma. Cambia **de dónde salen** sus datos:
@@ -47,9 +95,9 @@ El resto (algoritmo de contraseñas, factor de MFA, parámetros y el tipo de act
 - **El JWT nunca es fuente de autorización.** Ni permisos, ni módulos, ni sucursales, ni laboratorio.
 - **Sin atajos por tipo de actor.** No existe ninguna regla del tipo "si el actor es `platform` (o `system`), omitir la autorización".
 - **Sin cambios** en la cadena de auditoría, el outbox, la idempotencia ni las secuencias.
-- **Architecture Freeze:** este diseño no lo modifica. Los ajustes documentales que necesitará se listan en la sección 9.
+- **Architecture Freeze:** este diseño no lo modifica ni redefine el roadmap (§1). Las aclaraciones documentales posibles se listan en la §12.
 
-## 2. Caminos de ejecución
+## 5. Caminos de ejecución
 
 Toda escritura ocurre por **uno de estos tres caminos**, todos cerrados y enumerados. No hay un cuarto.
 
@@ -65,7 +113,7 @@ El pipeline de autenticación **no** es una puerta trasera del CommandBus:
 - No ejecuta comandos de negocio.
 - Ninguno de sus puntos de entrada concede autorización más allá de crear o cerrar la propia sesión.
 
-## 3. Modelo de datos propuesto (resumen)
+## 6. Modelo de datos propuesto (resumen)
 
 Todo son propuestas; nada existe todavía.
 
@@ -95,7 +143,7 @@ Todo son propuestas; nada existe todavía.
 - lista de revocación de JWT;
 - contador de "versión de credenciales" (revocar sesiones cumple esa función).
 
-## 4. Modelo de amenazas de F1
+## 7. Modelo de amenazas de F1
 
 | Amenaza                                    | Defensa                                                                                                                                                                                     | Fase        | Prueba requerida                                                                                                                |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -120,7 +168,7 @@ Todo son propuestas; nada existe todavía.
 | XSS con token en el navegador              | Access token solo en memoria; refresh inaccesible para JavaScript; CSP en F1.8                                                                                                              | F1.5 · F1.8 | No se usa `localStorage` ni `sessionStorage` para credenciales                                                                  |
 | `device_id` falsificado                    | Es un dato informativo enviado por el cliente y no confiable; nunca autentica ni autoriza                                                                                                   | F1.5        | Cambiar `device_id` no altera ninguna decisión de acceso                                                                        |
 
-## 5. Matriz F1.3 → F1.6
+## 8. Matriz F1.3 → F1.6
 
 |                  | F1.3 Autorización desde la base                                                                                                                                                                                                                        | F1.4 Contexto de sucursal                                                         | F1.5 JWT, sesiones y hardening                                                                                                      | F1.6 MFA                                                                                                                                                               |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -130,10 +178,10 @@ Todo son propuestas; nada existe todavía.
 | **Migraciones**  | Ninguna                                                                                                                                                                                                                                                | `0006`: clave foránea compuesta y trigger en la auditoría                         | `0007`: columnas de `app.users`, `platform.permissions.assignable`, `credential_tokens`, `user_sessions`, `session_refresh_tokens`  | `0008`: `roles.requires_mfa`, `user_mfa_factors`, `user_recovery_codes`, `mfa_challenges`, columnas de MFA en `user_sessions`                                          |
 | **Pruebas**      | Permisos inflados; rol inactivo; sin rol; usuario inexistente o no activo; laboratorio no disponible; unión de roles; `all_branches`; comando legítimo de F1 no bloqueado por habilitación; módulo de plan sin habilitar bloqueado aunque haya permiso | Matriz de ataques de `x-branch-id`; el trigger rechaza una inserción directa      | Casos de la sección 4 para token, sesión, refresh, CSRF y runner de infraestructura                                                 | Desafío: uso único, vencimiento, límite de intentos, no aceptado como Bearer; TOTP con anti-replay; recuperación; reset; sesiones al activar; regla de "cualquier rol" |
 | **Riesgos**      | Latencia; romper los tests de F0                                                                                                                                                                                                                       | Un bug del trigger bloquea escrituras legítimas                                   | Complejidad de rotación; cookies en desarrollo; autenticación del operador antes de F2                                              | Pérdida del segundo factor; custodia de la llave                                                                                                                       |
-| **Aceptación**   | §8                                                                                                                                                                                                                                                     | §8                                                                                | §8                                                                                                                                  | §8                                                                                                                                                                     |
+| **Aceptación**   | §11                                                                                                                                                                                                                                                    | §11                                                                               | §11                                                                                                                                 | §11                                                                                                                                                                    |
 | **No toca**      | RLS, contrato del CommandBus, auditoría, outbox, frontend                                                                                                                                                                                              | CommandBus, sesiones, JWT                                                         | RLS de F0; contrato del CommandBus; frontend (F1.8)                                                                                 | Usuarios de plataforma (F2); WebAuthn                                                                                                                                  |
 
-## 6. Migraciones y compatibilidad
+## 9. Migraciones y compatibilidad
 
 - **Hecho clave:** hoy **no existe ningún emisor de tokens**, así que no hay sesiones reales que mantener. La compatibilidad temporal afecta solo a pruebas y desarrollo.
 - **Orden:** `0006` (F1.4), `0007` (F1.5), `0008` (F1.6). Solo agregan.
@@ -146,7 +194,7 @@ Todo son propuestas; nada existe todavía.
   - las migraciones son de avance: revertir es aplicar una migración nueva que desactive el trigger o deje de usar una tabla, sin borrar datos;
   - hasta cerrar F1.5 se puede volver a HS256 revirtiendo el PR.
 
-## 7. Rendimiento
+## 10. Rendimiento
 
 Detalle en `F1_2_AUTHZ.md` §5.
 
@@ -158,14 +206,14 @@ Detalle en `F1_2_AUTHZ.md` §5.
   - la base de datos sigue siendo la fuente de verdad;
   - Redis, si se usa en el futuro para esto, no la sustituye.
 
-## 8. Criterios de aceptación
+## 11. Criterios de aceptación
 
 **F1.2 (diseño) terminado cuando:**
 
 1. Estos cinco documentos estén aprobados, con cada decisión A–N marcada como aprobada, modificada o diferida.
 2. La ADR 0031 esté redactada y aprobada.
-3. El alcance de F1 (decisión A) esté aprobado y los cambios documentales de la sección 9 estén autorizados.
-4. Las dependencias de D-10 (llaves de firma, llave de cifrado de MFA, autenticación del operador) tengan una solución provisional aprobada.
+3. La decisión A (alcance del diseño F1.2, sin redefinir F1/F2) esté aprobada.
+4. D-10 **no** es condición para cerrar F1.2. Es condición para el despliegue a producción de F1.5 y F1.6 (§3).
 
 **F1.3:**
 
@@ -186,6 +234,7 @@ Detalle en `F1_2_AUTHZ.md` §5.
 - Hay pruebas de expiración, revocación, rotación, reutilización, logout, cambio de contraseña, bloqueo, enumeración, CSRF (incluido el subdominio hermano) y del runner de infraestructura (mínimo privilegio, motivo, idempotencia sin secretos en la respuesta guardada).
 - No hay secretos en el código.
 - Producción no arranca con un secreto o llave de ejemplo.
+- Antes de cualquier despliegue a producción: D-10 resuelto (gestión de secretos y origen de la API).
 
 **F1.6:**
 
@@ -195,15 +244,15 @@ Detalle en `F1_2_AUTHZ.md` §5.
 - Reset solo por administrador (con motivo) o por el runner de infraestructura.
 - Las demás sesiones se revocan al activar el MFA.
 
-## 9. Documentación existente que habría que actualizar (no se modifica ahora)
+## 12. Documentación existente que habría que actualizar (no se modifica ahora)
 
-| Documento                                                        | Cambio propuesto                                                                                                                                        |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/architecture/ARCHITECTURE_FREEZE.md` §33 y §33.1 (fila F1) | Registrar lo que se difiere de F1 según la decisión A                                                                                                   |
-| `ARCHITECTURE_FREEZE.md` §6                                      | Aclarar que el MFA de Super Admin llega con los usuarios de plataforma en F2                                                                            |
-| `ARCHITECTURE_FREEZE.md` §5 y §11                                | Remitir a la ADR 0031 para la separación entre estado operativo del laboratorio y estado de suscripción                                                 |
-| `docs/adr/0003-comandos-auditoria-outbox.md` (adenda)            | Registrar los tres caminos de ejecución; la fase de la reautenticación (F1.6); `client_time`/`offline` con el modo sin conexión; actor `provider` en F7 |
-| `docs/adr/0004-desviaciones-fase-0.md`                           | Nota: superada en permisos por la ADR 0031 cuando se apruebe                                                                                            |
-| `docs/f1/F1_PLAN.md`                                             | F1.2 = diseño aprobado; enlaces a estos documentos; criterios actualizados                                                                              |
-| `packages/contracts/src/permissions.json`                        | En F1.5: permisos nuevos y marca `assignable`                                                                                                           |
-| `.env.example`                                                   | En F1.5: reemplazar `JWT_SECRET` por la configuración de llaves                                                                                         |
+| Documento                                                        | Cambio propuesto                                                                                                                                                                    |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/architecture/ARCHITECTURE_FREEZE.md` §33 y §33.1 (fila F1) | Solo si en otro momento se aprueba una reubicación de elementos no cubiertos por F1.2 (decisión A). F1.2 no lo requiere                                                             |
+| `ARCHITECTURE_FREEZE.md` §6                                      | Aclaración documental, sin cambio de alcance: el MFA de Super Admin se aplica cuando exista el modelo de usuarios de plataforma, que llega con la consola que el Freeze asigna a F2 |
+| `ARCHITECTURE_FREEZE.md` §5 y §11                                | Remitir a la ADR 0031 para la separación entre estado operativo del laboratorio y estado de suscripción                                                                             |
+| `docs/adr/0003-comandos-auditoria-outbox.md` (adenda)            | Registrar los tres caminos de ejecución y la reautenticación declarada por comando (F1.6)                                                                                           |
+| `docs/adr/0004-desviaciones-fase-0.md`                           | Nota: superada en permisos por la ADR 0031 cuando se apruebe                                                                                                                        |
+| `docs/f1/F1_PLAN.md`                                             | Alinear la fila F1.3 con la decisión L (módulos desde el proveedor estático, sin caché por defecto; §2); F1.2 = diseño aprobado; enlaces a estos documentos                         |
+| `packages/contracts/src/permissions.json`                        | En F1.5: permisos nuevos y marca `assignable`                                                                                                                                       |
+| `.env.example`                                                   | En F1.5: reemplazar `JWT_SECRET` por la configuración de llaves                                                                                                                     |

@@ -4,30 +4,30 @@ Cada decisión sigue el formato: decisión, problema, opciones, recomendación, 
 
 **Ninguna está aprobada ni implementada.** El detalle técnico está en `F1_2_AUTHZ.md`, `F1_2_SESSIONS_JWT.md` y `F1_2_MFA.md`, que deben coincidir con esta matriz.
 
-| ID  | Tema                                    | Recomendación resumida                                                    | Fase       |
-| --- | --------------------------------------- | ------------------------------------------------------------------------- | ---------- |
-| A   | Alcance de F1                           | Seguridad y AppShell en F1; resto diferido por primer consumidor          | Documental |
-| B   | Primer usuario                          | Runner de infraestructura + token de activación de un solo uso            | F1.5       |
-| C   | Contraseñas                             | `scrypt` como decisión pragmática, con migración futura a Argon2id        | F1.5       |
-| D   | Access token                            | Solo identidad y metadatos; `lab` solo como comprobación                  | F1.5       |
-| E   | Sesiones                                | Sesión persistente consultada en cada petición                            | F1.5       |
-| F   | Refresh y CSRF                          | Cookie `HttpOnly` host-only + `Origin` exacto + cabecera + Fetch Metadata | F1.5       |
-| G   | 401 frente a 403                        | 401 sin autenticación válida; 403 autenticado sin autorización            | F1.3–F1.6  |
-| H   | Autorización desde la base              | Flujo único; la base es la fuente de verdad                               | F1.3       |
-| I   | `x-branch-id`                           | Solo contexto validado; auditoría derivada por el servidor                | F1.4       |
-| J   | MFA                                     | TOTP para usuarios de laboratorio; desafío separado; plataforma en F2     | F1.6       |
-| K   | `ai`                                    | Se renombra solo el módulo; el tipo de actor queda igual                  | F1.7       |
-| L   | Habilitación de módulos en F1           | Proveedor estático basado en el registro; `permissions != enabledModules` | F1.3       |
-| M   | Estado del laboratorio                  | Estado operativo de plataforma, separado de billing                       | F1.3       |
-| N   | Caminos de ejecución y actor `platform` | Tres caminos cerrados; sin atajos por tipo de actor                       | F1.5       |
+| ID  | Tema                                    | Recomendación resumida                                                                                                   | Fase       |
+| --- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------- |
+| A   | Alcance del diseño F1.2                 | Solo seguridad; no redefine F1/F2 ni el roadmap                                                                          | Documental |
+| B   | Primer usuario                          | Runner de infraestructura + token de activación de un solo uso                                                           | F1.5       |
+| C   | Contraseñas                             | `scrypt` como decisión pragmática, con migración futura a Argon2id                                                       | F1.5       |
+| D   | Access token                            | Solo identidad y metadatos; `lab` solo como comprobación                                                                 | F1.5       |
+| E   | Sesiones                                | Sesión persistente consultada en cada petición                                                                           | F1.5       |
+| F   | Refresh y CSRF                          | Cookie `HttpOnly` host-only + `Origin` exacto + cabecera + Fetch Metadata                                                | F1.5       |
+| G   | 401 frente a 403                        | 401 sin autenticación válida; 403 autenticado sin autorización                                                           | F1.3–F1.6  |
+| H   | Autorización desde la base              | Flujo único; la base es la fuente de verdad                                                                              | F1.3       |
+| I   | `x-branch-id`                           | Solo contexto validado; auditoría derivada por el servidor                                                               | F1.4       |
+| J   | MFA                                     | TOTP para usuarios de laboratorio; desafío separado; usuarios de plataforma cuando exista su modelo (F2 según el Freeze) | F1.6       |
+| K   | `ai`                                    | Se renombra solo el módulo; el tipo de actor queda igual                                                                 | F1.7       |
+| L   | Habilitación de módulos en F1           | Proveedor estático basado en el registro; `permissions != enabledModules`                                                | F1.3       |
+| M   | Estado del laboratorio                  | Estado operativo de plataforma, separado de billing                                                                      | F1.3       |
+| N   | Caminos de ejecución y actor `platform` | Tres caminos cerrados; sin atajos por tipo de actor                                                                      | F1.5       |
 
 ---
 
-## A. Alcance exacto de F1
+## A. Alcance del diseño F1.2
 
-**DECISIÓN:** qué elementos de la fila F1 del Freeze (§33) se construyen en F1 y cuáles se difieren de forma explícita.
+**DECISIÓN:** qué cubre el diseño F1.2 y cómo se relaciona con el resto de la fila F1 del Freeze.
 
-**PROBLEMA:** el Freeze pone en F1 varios elementos que no figuran en F1.1–F1.9:
+**PROBLEMA:** la fila F1 del Freeze (§33) incluye elementos que no son de seguridad y que F1.1–F1.9 no mencionan:
 
 - Configuration Engine;
 - búsqueda y `Ctrl + K`;
@@ -35,41 +35,45 @@ Cada decisión sigue el formato: decisión, problema, opciones, recomendación, 
 - `esign`;
 - i18n y moneda;
 - observabilidad base;
-- dispositivos;
-- la adenda de auditoría.
+- registro de dispositivos;
+- adenda de auditoría.
 
-La instrucción de inicio de F1 limitó F1 a seguridad, AppShell y las deudas F1-TD.
+Una versión anterior de este documento proponía reubicarlos, lo que podía leerse como una redefinición del alcance de F1 y F2.
 
 **OPCIONES:**
 
-1. Incorporar todo a F1.
-2. Diferir todo sin criterio.
-3. Decidir elemento por elemento según su primer consumidor.
+1. Que F1.2 decida su ubicación.
+2. Que F1.2 se limite a su diseño de seguridad y deje esa ubicación fuera de su alcance.
 
-**RECOMENDACIÓN: opción 3.**
+**RECOMENDACIÓN: opción 2.** F1.2 **no redefine** el alcance de F1 ni de F2 ni modifica el roadmap del Freeze (`F1_2_DESIGN.md` §1).
 
-| Elemento                                                                                                     | Recomendación                                                                                                                                         | Motivo                                                                 |
-| ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Autenticación, sesiones, MFA, las 5 deudas F1-TD, registro de 55 módulos, AppShell y Design System en código | **F1** (F1.3–F1.8)                                                                                                                                    | Ya planificado                                                         |
-| Dispositivos                                                                                                 | **Parcial en F1.5:** cada sesión guarda `device_id` **solo como dato informativo**. **Diferido:** el registro o aprobación de dispositivos confiables | La sesión cubre el control; aprobar dispositivos es otra funcionalidad |
-| `Ctrl + K`                                                                                                   | **Parcial en F1.8:** navegación entre pantallas del AppShell. **Diferido:** búsqueda global, a F3                                                     | Sin datos no hay qué buscar                                            |
-| i18n y moneda                                                                                                | **Parcial en F1.8:** textos por clave (`es-DO`). **Diferido:** tipo monetario, a F3                                                                   | El dinero aún no tiene consumidor                                      |
-| Configuration Engine                                                                                         | **Diferido a F2** (primer bloque). En F1, los parámetros de seguridad salen de configuración de plataforma validada al arrancar, nunca del código     | Su primer consumidor real está en F2                                   |
-| `workspace`                                                                                                  | **Diferido a F4**                                                                                                                                     | Primer consumidor: Mi Trabajo                                          |
-| `esign`                                                                                                      | **Diferido a F5**                                                                                                                                     | Primer consumidor: SOP críticos                                        |
-| Observabilidad base                                                                                          | **Parcial en F1.9:** eventos de seguridad estructurados con `request_id`. **Diferido:** métricas y trazas, a F7B                                      | Los logs con `request_id` ya existen                                   |
-| Adenda de auditoría (`client_time`, `offline`, actor `provider`)                                             | **Diferido:** `client_time`/`offline` con el modo sin conexión; `provider` a F7                                                                       | Sin productor en F1                                                    |
+- **F1.2 diseña:**
+  - autenticación, sesiones y JWT;
+  - autorización desde la base;
+  - MFA;
+  - contexto de sucursal;
+  - pipeline de seguridad y runner de infraestructura;
+  - bootstrap de seguridad;
+  - la seguridad relacionada con el AppShell;
+  - los contratos necesarios para las fases posteriores de F1.
+- **F2 mantiene**, según el Freeze:
+  - la administración completa de tenants;
+  - la administración de usuarios;
+  - los roles y la matriz administrativa;
+  - suscripciones, planes y billing;
+  - las capacidades de plataforma que el Freeze le asigna.
+- **Los elementos listados en el problema no forman parte del diseño F1.2 y siguen donde el Freeze los pone.** F1.2 solo define su punto de contacto con la seguridad, cuando lo hay:
+  - `device_id` se guarda en la sesión como dato informativo;
+  - mientras no exista el Configuration Engine, los parámetros de seguridad salen de configuración de plataforma validada al arrancar, nunca del código.
+- **Reubicar** cualquiera de esos elementos es una **decisión aparte, pendiente**. Requiere aprobación y la actualización del Freeze; no se toma en F1.2.
 
-**IMPACTO:** F1 queda en seguridad y fundamentos. El Freeze necesita una actualización documental de su fila F1.
+**IMPACTO:** ninguno sobre el Freeze ni el roadmap.
 
-**RIESGOS:** F2 crece con el Configuration Engine.
+**RIESGOS:** la ubicación de esos elementos queda abierta hasta que se decida por separado.
 
-**ALTERNATIVAS DESCARTADAS:**
+**ALTERNATIVAS DESCARTADAS:** la opción 1, porque excede el propósito de un diseño de seguridad.
 
-- Opción 1: alarga F1 con piezas sin consumidor.
-- Opción 2: pierde la trazabilidad.
-
-**FASE:** decisión documental ahora; ejecución en F1.3–F1.9.
+**FASE:** documental.
 
 ---
 
@@ -79,8 +83,8 @@ La instrucción de inicio de F1 limitó F1 a seguridad, AppShell y las deudas F1
 
 **PROBLEMA:**
 
-- No hay emisor de tokens ni gestión de usuarios, que es de F2.
-- La provisión de laboratorios también es de F2.
+- No hay emisor de tokens.
+- La administración de usuarios y la provisión de tenants son de F2 según el Freeze (C-12, C-26).
 - Un login en F1 necesita usuarios con credenciales.
 
 **OPCIONES:**
@@ -91,7 +95,7 @@ La instrucción de inicio de F1 limitó F1 a seguridad, AppShell y las deudas F1
 
 **RECOMENDACIÓN: opción 3.** Detalle en `F1_2_SESSIONS_JWT.md` §7.
 
-- **Requisito previo:** el laboratorio existe. En F1 solo existe en datos de prueba o desarrollo; la provisión real es de F2.
+- **Requisito previo:** el laboratorio existe. En F1 solo existe en datos de prueba o desarrollo; la provisión real es de F2 según el Freeze.
 - **Qué hace `security.admin.bootstrap`**, en una sola transacción con RLS del laboratorio objetivo:
   - crea el rol `lab_admin` desde una plantilla;
   - crea el usuario en estado `invited` y su asignación de rol;
@@ -183,12 +187,12 @@ La instrucción de inicio de F1 limitó F1 a seguridad, AppShell y las deudas F1
 | Nombre, correo, cédula, sucursal activa, estado de MFA, `device_id` | Datos personales o de estado                   | **NO**                                                                                                                                                                                                                                                                                                                                           |
 
 - **Algoritmo:** asimétrico con `jose`. Recomendado EdDSA (Ed25519); ES256 es una alternativa aceptable.
-- **Llaves:** la privada solo en el emisor, desde variables de entorno o un archivo de secretos montado hasta D-10.
+- **Llaves:** la privada solo en el emisor. Se guarda en variables de entorno o en un archivo de secretos montado, como **solución temporal de diseño**. La gestión definitiva depende de D-10, y esta solución no se lleva a producción sin resolver D-10 (`F1_2_DESIGN.md` §3).
 - **Rotación:** por `kid`.
 
 **IMPACTO:** el token deja de ser fuente de autorización y de laboratorio.
 
-**RIESGOS:** gestión de llaves antes de D-10.
+**RIESGOS:** D-10 pendiente. No bloquea el diseño, pero sí el despliegue a producción.
 
 **ALTERNATIVAS DESCARTADAS:**
 
@@ -250,7 +254,7 @@ La instrucción de inicio de F1 limitó F1 a seguridad, AppShell y las deudas F1
 
 **Access token:** solo en memoria.
 
-**IMPACTO:** exige la API en el mismo origen que la app en producción (**NO DETERMINADO**; se confirma con D-10). Para leer la cookie se usaría el paquete `cookie` (ya está en el lockfile como dependencia de Express), lo que requiere regenerar el lockfile; la alternativa es un lector propio mínimo.
+**IMPACTO:** exige la API en el mismo origen que la app. En producción está **NO DETERMINADO** y debe definirse **antes del despliegue productivo** (D-10, `F1_2_DESIGN.md` §3). Para leer la cookie se usaría el paquete `cookie` (ya está en el lockfile como dependencia de Express), lo que requiere regenerar el lockfile; la alternativa es un lector propio mínimo.
 
 **RIESGOS:** entorno de desarrollo con HTTPS o `localhost` y resolución del subdominio en local.
 
@@ -323,11 +327,11 @@ Petición → laboratorio (host) → identidad (JWT) → usuario → sesión →
 - TOTP para usuarios de laboratorio.
 - Es obligatorio si **cualquier** rol activo del usuario lo exige.
 - El desafío MFA es un artefacto separado del access token.
-- Los usuarios de plataforma quedan para F2.
+- El MFA de usuarios de plataforma se aplica cuando exista su modelo, con la consola que el Freeze asigna a F2.
 
 Detalle en `F1_2_MFA.md`.
 
-**FASE:** F1.6; plataforma en F2.
+**FASE:** F1.6.
 
 ---
 
@@ -428,7 +432,7 @@ Detalle en `F1_2_MFA.md`.
 - El login no puede exigir un permiso que el usuario aún no tiene.
 - Ninguno de los dos debe convertirse en un bypass del CommandBus.
 
-**RECOMENDACIÓN:** tres caminos cerrados (`F1_2_DESIGN.md` §2):
+**RECOMENDACIÓN:** tres caminos cerrados (`F1_2_DESIGN.md` §5):
 
 1. **CommandBus** para todo lo que hace un usuario autenticado, con permiso de la base.
 2. **Pipeline de autenticación** para una lista fija de puntos de entrada (login, MFA, refresh, logout, activación, cambio de la propia contraseña). Sin permiso de negocio, pero con verificación propia, validación, límite de intentos, transacción con RLS, auditoría e idempotencia donde aplica.
@@ -448,7 +452,7 @@ Detalle en `F1_2_MFA.md`.
 
 **RIESGOS:**
 
-- En F1, la autenticación del operador depende del acceso a la infraestructura. En F2, la consola con usuarios de plataforma y MFA reemplaza el uso rutinario, y el runner queda solo para _break-glass_.
+- En F1, la autenticación del operador depende del acceso a la infraestructura, y su mecanismo definitivo de D-10. Cuando exista la consola de plataforma (F2 según el Freeze), con usuarios de plataforma y MFA, reemplazará el uso rutinario, y el runner quedará solo para _break-glass_.
 
 **ALTERNATIVAS DESCARTADAS:**
 

@@ -53,7 +53,7 @@ Aun así, **no son un bypass**:
 - **Llaves:**
   - la privada solo en el emisor;
   - las públicas anteriores siguen activas mientras vivan sus tokens;
-  - se cargan de variables de entorno o de un archivo de secretos montado hasta D-10;
+  - se cargan de variables de entorno o de un archivo de secretos montado, como **solución temporal de diseño**; la gestión definitiva depende de D-10, y esta solución no se lleva a producción sin resolverla (`F1_2_DESIGN.md` §3);
   - nunca están en el repositorio, en logs ni en respuestas;
   - producción no arranca con una llave o secreto de ejemplo.
 
@@ -109,7 +109,7 @@ Aun así, **no son un bypass**:
 
 **Access token en el navegador:** solo en memoria. Al recargar la página, el cliente llama a `refresh` con la cookie. Nunca se usa `localStorage` ni `sessionStorage` para credenciales.
 
-**Requisito de despliegue:** la API debe estar en el **mismo origen** que la app (`<lab>.<dominio>/api/v1`), como ya hace el proxy de Vite en desarrollo. En producción está **NO DETERMINADO** y se confirma con D-10.
+**Requisito de despliegue:** la API debe estar en el **mismo origen** que la app (`<lab>.<dominio>/api/v1`), como ya hace el proxy de Vite en desarrollo. En producción está **NO DETERMINADO** y debe definirse **antes del despliegue productivo** (D-10).
 
 ## 5. Flujos
 
@@ -159,21 +159,21 @@ Detalle en `F1_2_MFA.md` §3.
 
 Es un camino controlado para un **número cerrado** de comandos de infraestructura. **No es una identidad que se salte el CommandBus ni la autorización.**
 
-| Aspecto                     | Regla                                                                                                                                                                                                                                                                       |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Comandos admitidos          | Solo los marcados como de infraestructura: `security.admin.bootstrap` (primer administrador), `security.admin.break_glass` (reemitir activación o resetear el MFA del último administrador). Ningún otro comando puede ejecutarse por aquí                                  |
-| Cómo se ejecuta             | CLI en `apps/api`, sin endpoint HTTP. Solo en el entorno desplegado, desde el acceso operativo del servidor                                                                                                                                                                 |
-| Quién puede ejecutarlo      | Operadores de plataforma autorizados. En F1, el control de acceso es el de la infraestructura (quién puede entrar al entorno de ejecución). En F2, la consola con usuarios de plataforma y MFA reemplaza el uso rutinario, y el runner queda solo para _break-glass_        |
-| Identificación del operador | `--operator <identificador>` obligatorio, contrastado con una lista de operadores de la configuración de plataforma. Si está disponible, se registra también la identidad de la infraestructura                                                                             |
-| Laboratorio objetivo        | `--lab <subdominio>`, resuelto en `platform.laboratory_directory`. En producción se exige además `--confirm-lab <subdominio>` repetido                                                                                                                                      |
-| Motivo                      | Obligatorio, de 20 caracteres o más, con referencia a un ticket en producción                                                                                                                                                                                               |
-| Contexto                    | Se construye un `TenantContext` de **mínimo privilegio**: actor `{ type: 'platform', id: operador }`, `laboratoryId` = objetivo, `permissions` = **exactamente** el permiso del comando ejecutado, sin sucursales, `requestId` nuevo                                        |
-| Autorización                | El comando pasa por el **mismo** `CommandBus.execute`: módulo habilitado, permiso, motivo, validación, transacción con RLS del laboratorio objetivo, auditoría y outbox. **No existe** ninguna excepción por ser `platform`                                                 |
-| Permisos no asignables      | `security.admin.bootstrap` y `security.admin.break_glass` tienen `assignable = false` en `platform.permissions`. Un control en la base impide agregarlos a `app.role_permissions`, así que ningún usuario puede recibirlos                                                  |
-| Idempotencia                | `--idempotency-key` obligatoria. La respuesta guardada en `kernel.idempotency_keys` **nunca contiene secretos**: se guarda el id del token, no su valor. Una repetición devuelve el mismo resultado sin volver a mostrar el token; para otro token hace falta _break-glass_ |
-| Auditoría                   | Evento encadenado en el laboratorio objetivo, con actor `platform`, operador, motivo, `request_id` y host de ejecución. Además, un evento de seguridad en el log estructurado                                                                                               |
-| Producción                  | Exige `--confirm-lab`, motivo con ticket y una alerta de seguridad por ejecución. `bootstrap` se niega si ya existe un `lab_admin` activo. `break_glass` revoca todas las sesiones del usuario afectado                                                                     |
-| Credenciales                | **Nunca** se crea una contraseña por defecto. El usuario solo obtiene acceso mediante un token de activación de un solo uso, que se muestra una sola vez al operador y nunca se registra en logs                                                                            |
+| Aspecto                     | Regla                                                                                                                                                                                                                                                                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Comandos admitidos          | Solo los marcados como de infraestructura: `security.admin.bootstrap` (primer administrador), `security.admin.break_glass` (reemitir activación o resetear el MFA del último administrador). Ningún otro comando puede ejecutarse por aquí                                                                                                                    |
+| Cómo se ejecuta             | CLI en `apps/api`, sin endpoint HTTP. Solo en el entorno desplegado, desde el acceso operativo del servidor                                                                                                                                                                                                                                                   |
+| Quién puede ejecutarlo      | Operadores de plataforma autorizados. En F1, el control de acceso es el de la infraestructura (quién puede entrar al entorno de ejecución); su mecanismo definitivo depende de D-10. Cuando exista la consola de plataforma (F2 según el Freeze), con usuarios de plataforma y MFA, reemplazará el uso rutinario, y el runner quedará solo para _break-glass_ |
+| Identificación del operador | `--operator <identificador>` obligatorio, contrastado con una lista de operadores de la configuración de plataforma. Si está disponible, se registra también la identidad de la infraestructura                                                                                                                                                               |
+| Laboratorio objetivo        | `--lab <subdominio>`, resuelto en `platform.laboratory_directory`. En producción se exige además `--confirm-lab <subdominio>` repetido                                                                                                                                                                                                                        |
+| Motivo                      | Obligatorio, de 20 caracteres o más, con referencia a un ticket en producción                                                                                                                                                                                                                                                                                 |
+| Contexto                    | Se construye un `TenantContext` de **mínimo privilegio**: actor `{ type: 'platform', id: operador }`, `laboratoryId` = objetivo, `permissions` = **exactamente** el permiso del comando ejecutado, sin sucursales, `requestId` nuevo                                                                                                                          |
+| Autorización                | El comando pasa por el **mismo** `CommandBus.execute`: módulo habilitado, permiso, motivo, validación, transacción con RLS del laboratorio objetivo, auditoría y outbox. **No existe** ninguna excepción por ser `platform`                                                                                                                                   |
+| Permisos no asignables      | `security.admin.bootstrap` y `security.admin.break_glass` tienen `assignable = false` en `platform.permissions`. Un control en la base impide agregarlos a `app.role_permissions`, así que ningún usuario puede recibirlos                                                                                                                                    |
+| Idempotencia                | `--idempotency-key` obligatoria. La respuesta guardada en `kernel.idempotency_keys` **nunca contiene secretos**: se guarda el id del token, no su valor. Una repetición devuelve el mismo resultado sin volver a mostrar el token; para otro token hace falta _break-glass_                                                                                   |
+| Auditoría                   | Evento encadenado en el laboratorio objetivo, con actor `platform`, operador, motivo, `request_id` y host de ejecución. Además, un evento de seguridad en el log estructurado                                                                                                                                                                                 |
+| Producción                  | Exige `--confirm-lab`, motivo con ticket y una alerta de seguridad por ejecución. `bootstrap` se niega si ya existe un `lab_admin` activo. `break_glass` revoca todas las sesiones del usuario afectado                                                                                                                                                       |
+| Credenciales                | **Nunca** se crea una contraseña por defecto. El usuario solo obtiene acceso mediante un token de activación de un solo uso, que se muestra una sola vez al operador y nunca se registra en logs                                                                                                                                                              |
 
 ## 7. Alta del primer usuario (decisión B)
 
@@ -264,7 +264,7 @@ Las listas de usuarios nunca seleccionan `password_hash`, y la auditoría oculta
   - mínimo 12 caracteres;
   - se rechaza si coincide con el correo o con listas comunes;
   - sin caducidad forzada;
-  - los parámetros son de plataforma, validados al arrancar, hasta el Configuration Engine (F2).
+  - los parámetros son de plataforma, validados al arrancar, mientras no exista el Configuration Engine previsto en el Freeze.
 - **Bloqueo por intentos:** backoff progresivo (5 fallos → 15 min), más el límite por IP y por cuenta.
 
 ## 10. Endpoints propuestos
