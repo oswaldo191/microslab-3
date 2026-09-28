@@ -23,8 +23,9 @@ El personal no debe ver un "módulo fiscal" aparte.
 - Cada documento tiene dos estados:
   - un estado interno (DRAFT, READY, SIGNED, PENDING_TRANSMISSION, TRANSMITTED, ACCEPTED, REJECTED, VOIDED, CONTINGENCY, PENDING_RETRY, FAILED; lista provisional, **PENDIENTE DE VALIDACIÓN OFICIAL**);
   - `external_status`, el literal que devuelve DGII o el proveedor.
-  
+
   Un mapeo versionado por proveedor traduce el estado externo al interno.
+
 - La transmisión usa la interfaz `FiscalGateway`, con adaptadores `DGII_DIRECT`, `SANDBOX`, `PROVIDER_A`, `PROVIDER_B` y futuros. D-03 aprueba solo esta arquitectura. Qué conector se implementa y con qué proveedor es D-20 (con D-22 si aplica).
 - `einvoicing` no depende de ningún módulo comercial. Firma y transmisión ocurren después del commit, desde el outbox, en una cola fiscal propia.
 - La factura de suscripción de MicroSlab usa el mismo motor, con otra configuración fiscal.

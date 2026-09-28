@@ -4,7 +4,7 @@
 
 ## Decisión
 
-- El archivo de Figma *MicroLabs* es la fuente visual principal: estructura, componentes, espaciado, tipografía (Montserrat en controles), iconografía, layout y estados.
+- El archivo de Figma _MicroLabs_ es la fuente visual principal: estructura, componentes, espaciado, tipografía (Montserrat en controles), iconografía, layout y estados.
 - Si un valor de Figma incumple la accesibilidad (WCAG 2.2 AA), se crea una variante accesible en lugar de copiarlo.
 - Caso aplicado: el botón de confirmación usa el relleno `success-action` #118431, con 4.8:1 frente a texto blanco. El #31BF48 de Figma (2.4:1) queda para usos no textuales.
 - Todo componente tiene:

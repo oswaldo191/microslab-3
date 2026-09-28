@@ -12,8 +12,9 @@
   - GRACE_PERIOD pasa a SUSPENDED tras 5 días calendario (configurable);
   - al pagar, vuelve a ACTIVE;
   - CANCELLED solo por decisión explícita.
-  
+
   Cada cambio emite evento y auditoría.
+
 - **Suspensión:** una etapa nueva de la tubería de comandos (adenda de ADR 0003) restringe administración, operaciones comerciales nuevas y funciones avanzadas. Nunca bloquea la lista versionada de operaciones esenciales clínicas (D-06).
 - **Comisión:**
   - se genera un asiento por **cobro efectivo**, con la tasa, el plan y la versión vigentes en ese momento;
@@ -31,7 +32,7 @@ Mitiga el riesgo R-06. La etapa de suscripción existe desde F2, antes de cualqu
 - Cada plan tiene un UUID inmutable y un código técnico estable (`free`, `pro`, `enterprise`).
 - El nombre visible (`FREE` inicialmente) es un dato de presentación: traducible y editable desde la consola.
 - Suscripciones, comisiones, estados de cuenta y auditoría referencian **plan + versión**, nunca el nombre.
-- Ninguna regla compara nombres. Las capacidades se leen de los *features* y límites del plan.
+- Ninguna regla compara nombres. Las capacidades se leen de los _features_ y límites del plan.
 
 ## Revisión CTO v2.1
 

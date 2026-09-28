@@ -25,6 +25,7 @@
   - bloqueo configurable de un equipo vencido en las worklists.
 
   Lo "inteligente" son reglas deterministas sobre uso, fallas y tendencia del IQC. La predicción es de `clinical-ai` (F17+) y nunca bloquea ni libera un equipo.
+
 - **Dashboard Regulatorio de Salud Pública RD (D-34, F11):**
   - `compliance` lo construye solo sobre requisitos cargados como referencias regulatorias versionadas (ADR 0008).
   - Cada indicador cita su norma.

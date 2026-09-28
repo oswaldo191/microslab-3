@@ -6,13 +6,13 @@
 
 ## Trazabilidad
 
-| Marca | Origen |
-| --- | --- |
+| Marca   | Origen                                                                                                      |
+| ------- | ----------------------------------------------------------------------------------------------------------- |
 | **[W]** | Documento "WORK CENTER Y FLUJO OPERATIVO INTELIGENTE DEL BIOANALISTA", secciones 1–28, y el inicio de la 29 |
-| **[M]** | Especificación maestra, secciones 29–34 (sample-centric, centros, prioridades, áreas, resultados, TAT) |
-| **[L]** | Tu lista del 27/09/2026 ("Completar Work Center") |
-| **[A]** | Arquitectura ya establecida: pipeline, auditoría, Configuration Engine, Design System, Delivery Calendar |
-| **[P]** | Propuesta mía; necesita tu aprobación |
+| **[M]** | Especificación maestra, secciones 29–34 (sample-centric, centros, prioridades, áreas, resultados, TAT)      |
+| **[L]** | Tu lista del 27/09/2026 ("Completar Work Center")                                                           |
+| **[A]** | Arquitectura ya establecida: pipeline, auditoría, Configuration Engine, Design System, Delivery Calendar    |
+| **[P]** | Propuesta mía; necesita tu aprobación                                                                       |
 
 El documento original se corta en la sección 29, "Principio de menos clics", justo después de tres preguntas:
 
@@ -112,6 +112,7 @@ Al escanear o seleccionar una muestra se abre un solo contexto, sin navegar por 
   - "pendiente".
 
   Copiar, pegar o editar en masa **nunca** salta las reglas de seguridad ni de auditoría **[W]**.
+
 - **Fórmulas [W]:** LDL, VLDL, índices hematológicos, BMI, relación albúmina/creatinina y fórmulas propias. Viven en el motor de fórmulas (`packages/expressions`, evaluador seguro), nunca en el frontend.
 - **Delta check [W]:**
   - muestra el valor anterior y el cambio porcentual;
@@ -181,22 +182,22 @@ El documento pide evaluar, para cada operación importante, cuántos clics, pant
 - La columna **Actual** es una estimación sobre el diseño del PDF/Figma (no hay sistema medido). Es la misma estimación que ya estaba en la arquitectura, sección 21, ampliada a todas las operaciones del documento.
 - La columna **Objetivo** es **[P]**. Se valida con una prueba de uso en F5 y F6 contra la regla maestra de **3 clics como máximo** **[M]**.
 
-| # | Operación (del documento) | Actual: clics / pantallas / campos | Objetivo: clics / pantallas / campos | Cómo se logra |
-| --- | --- | --- | --- | --- |
-| 1 | Empezar el turno y ver qué hacer | Buscar paciente: 3–4 / 2 / 1 | 0 / 1 / 0 | Mi Trabajo es la pantalla de llegada; "Continuar trabajando" |
-| 2 | Recibir una muestra | Lista, modal, estado: ~4 / 2 / 1–2 | 0 / 1 / 0 | Escanear en modo recepción; hora y usuario automáticos |
-| 3 | Abrir el contexto de una muestra | Buscar y abrir: ~3 / 2 / 1 | 0 / 1 / 0 | Escanear el tubo (sección 10) |
-| 4 | Ingresar los resultados de una muestra | Abrir, escribir, guardar, cerrar: ~6 / 2 / n parámetros | 0 / 1 / n | Tab/Enter; fórmulas, unidades y rangos automáticos; Ctrl + S |
-| 5 | Ingresar 20 muestras de hematología | Lo anterior × 20: ~120 / 40 / 20 × n | 1 / 1 / 20 × n | Entrada masiva por teclado; autosave; un guardado por lote |
-| 6 | Revisar un delta check | Buscar histórico en otra pantalla: ~4 / 2 / 0 | 0 / 1 / 0 | Anterior y % de cambio en la misma fila |
-| 7 | Solicitar repetición | No definido | 1 (tecla R) / 1 / 1 (motivo) | Diálogo en línea; valor original conservado |
-| 8 | Notificar un crítico | No existe en el diseño | 2 / 1 / 3 (a quién, medio, confirmación) | Diálogo en la misma fila; médico precargado; hora automática |
-| 9 | Validación técnica de un lote | Abrir y validar cada paciente: 2 × muestras | 2 / 1 / 0 (+ reautenticación si aplica) | Selección múltiple + Validar |
-| 10 | Validación profesional de un lote | Igual que el anterior | 2 / 1 / 0 (+ reautenticación) | Selección múltiple; críticos y deltas pendientes bloquean la selección |
-| 11 | Aplicar una vista de trabajo | Filtros cada vez: 4–6 / 1 / varios | 1 / 1 / 0 | Vistas guardadas |
-| 12 | Reasignar trabajo (supervisor) | No definido | 2 / 1 / 1 (destino) | Selección + Reasignar; motivo si se configura |
-| 13 | Ver y atender una entrega en riesgo | No existe | 1 / 1 / 0 | Aviso en Mi Trabajo → contexto de la muestra con prioridad ajustada |
-| 14 | Pasar de una muestra a la siguiente | Cerrar y buscar: ~3 / 2 / 1 | 0 (Enter) / 1 / 0 | Enter → siguiente muestra de la worklist |
+| #   | Operación (del documento)              | Actual: clics / pantallas / campos                      | Objetivo: clics / pantallas / campos     | Cómo se logra                                                          |
+| --- | -------------------------------------- | ------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
+| 1   | Empezar el turno y ver qué hacer       | Buscar paciente: 3–4 / 2 / 1                            | 0 / 1 / 0                                | Mi Trabajo es la pantalla de llegada; "Continuar trabajando"           |
+| 2   | Recibir una muestra                    | Lista, modal, estado: ~4 / 2 / 1–2                      | 0 / 1 / 0                                | Escanear en modo recepción; hora y usuario automáticos                 |
+| 3   | Abrir el contexto de una muestra       | Buscar y abrir: ~3 / 2 / 1                              | 0 / 1 / 0                                | Escanear el tubo (sección 10)                                          |
+| 4   | Ingresar los resultados de una muestra | Abrir, escribir, guardar, cerrar: ~6 / 2 / n parámetros | 0 / 1 / n                                | Tab/Enter; fórmulas, unidades y rangos automáticos; Ctrl + S           |
+| 5   | Ingresar 20 muestras de hematología    | Lo anterior × 20: ~120 / 40 / 20 × n                    | 1 / 1 / 20 × n                           | Entrada masiva por teclado; autosave; un guardado por lote             |
+| 6   | Revisar un delta check                 | Buscar histórico en otra pantalla: ~4 / 2 / 0           | 0 / 1 / 0                                | Anterior y % de cambio en la misma fila                                |
+| 7   | Solicitar repetición                   | No definido                                             | 1 (tecla R) / 1 / 1 (motivo)             | Diálogo en línea; valor original conservado                            |
+| 8   | Notificar un crítico                   | No existe en el diseño                                  | 2 / 1 / 3 (a quién, medio, confirmación) | Diálogo en la misma fila; médico precargado; hora automática           |
+| 9   | Validación técnica de un lote          | Abrir y validar cada paciente: 2 × muestras             | 2 / 1 / 0 (+ reautenticación si aplica)  | Selección múltiple + Validar                                           |
+| 10  | Validación profesional de un lote      | Igual que el anterior                                   | 2 / 1 / 0 (+ reautenticación)            | Selección múltiple; críticos y deltas pendientes bloquean la selección |
+| 11  | Aplicar una vista de trabajo           | Filtros cada vez: 4–6 / 1 / varios                      | 1 / 1 / 0                                | Vistas guardadas                                                       |
+| 12  | Reasignar trabajo (supervisor)         | No definido                                             | 2 / 1 / 1 (destino)                      | Selección + Reasignar; motivo si se configura                          |
+| 13  | Ver y atender una entrega en riesgo    | No existe                                               | 1 / 1 / 0                                | Aviso en Mi Trabajo → contexto de la muestra con prioridad ajustada    |
+| 14  | Pasar de una muestra a la siguiente    | Cerrar y buscar: ~3 / 2 / 1                             | 0 (Enter) / 1 / 0                        | Enter → siguiente muestra de la worklist                               |
 
 Reglas de diseño que salen de este análisis **[P]**, todas dentro de lo que ya pide el documento:
 
@@ -218,34 +219,34 @@ Reglas de diseño que salen de este análisis **[P]**, todas dentro de lo que ya
 
 ## 14. Arquitectura: subdominios del documento → módulos [W §25]
 
-| Subdominio pedido | Módulo dueño | Fase |
-| --- | --- | --- |
-| /work-center, /worklists, /work-center-config | `workcenter` | F4 |
-| /sample-workflow | `samples` (estados) + `workcenter` (colas) | F3 · F5 |
-| /tat-monitor | `workcenter` (TAT Engine) | F5 |
-| /result-entry, /repetitions | `results` | F6 |
-| /result-review | `validation` | F6 |
-| /critical-results, /delta-check | `rules-engine` (detección) + `results` (eventos y notificación) | F6 |
-| /equipment-worklists | `integrations` + app `connector` | F17+ |
-| /work-center-analytics | `analytics` | F10 |
+| Subdominio pedido                             | Módulo dueño                                                    | Fase    |
+| --------------------------------------------- | --------------------------------------------------------------- | ------- |
+| /work-center, /worklists, /work-center-config | `workcenter`                                                    | F4      |
+| /sample-workflow                              | `samples` (estados) + `workcenter` (colas)                      | F3 · F5 |
+| /tat-monitor                                  | `workcenter` (TAT Engine)                                       | F5      |
+| /result-entry, /repetitions                   | `results`                                                       | F6      |
+| /result-review                                | `validation`                                                    | F6      |
+| /critical-results, /delta-check               | `rules-engine` (detección) + `results` (eventos y notificación) | F6      |
+| /equipment-worklists                          | `integrations` + app `connector`                                | F17+    |
+| /work-center-analytics                        | `analytics`                                                     | F10     |
 
 No se duplica lógica. Rangos, críticos y delta son del Rule Engine; las fórmulas son del motor de expresiones; las colas son de `workcenter` **[W]**.
 
 ## 15. Modelo conceptual [W §26] (sin tablas todavía)
 
-| Concepto del documento | Nombre en MicroSlab | Módulo |
-| --- | --- | --- |
-| WorkCenters | `work_centers` | `workcenter` |
-| Worklists · WorklistItems · WorklistAssignments | `worklists` · `worklist_items` · `worklist_assignments` | `workcenter` |
-| WorklistViews | `saved_views` | `workspace` |
-| WorklistRules · WorklistPriorities | `worklist_rules` · `priority_policies` (configuración versionada) | `workcenter` |
-| SampleWorkflowStates | `sample_status_history` | `samples` |
-| TATEvents | `tat_events` | `workcenter` |
-| ResultDrafts · ResultEntries · ResultSources | `result_drafts` · `result_values` (versionados, con `source`) | `results` |
-| ResultRepetitions | `result_repetitions` | `results` |
-| CriticalResultEvents · CriticalResultNotifications | `critical_result_events` · `critical_result_notifications` | `results` |
-| DeltaChecks | `delta_check_evaluations` | `rules-engine` |
-| EquipmentMappings | `equipment_test_mappings` | `integrations` |
+| Concepto del documento                             | Nombre en MicroSlab                                               | Módulo         |
+| -------------------------------------------------- | ----------------------------------------------------------------- | -------------- |
+| WorkCenters                                        | `work_centers`                                                    | `workcenter`   |
+| Worklists · WorklistItems · WorklistAssignments    | `worklists` · `worklist_items` · `worklist_assignments`           | `workcenter`   |
+| WorklistViews                                      | `saved_views`                                                     | `workspace`    |
+| WorklistRules · WorklistPriorities                 | `worklist_rules` · `priority_policies` (configuración versionada) | `workcenter`   |
+| SampleWorkflowStates                               | `sample_status_history`                                           | `samples`      |
+| TATEvents                                          | `tat_events`                                                      | `workcenter`   |
+| ResultDrafts · ResultEntries · ResultSources       | `result_drafts` · `result_values` (versionados, con `source`)     | `results`      |
+| ResultRepetitions                                  | `result_repetitions`                                              | `results`      |
+| CriticalResultEvents · CriticalResultNotifications | `critical_result_events` · `critical_result_notifications`        | `results`      |
+| DeltaChecks                                        | `delta_check_evaluations`                                         | `rules-engine` |
+| EquipmentMappings                                  | `equipment_test_mappings`                                         | `integrations` |
 
 **No se crean tablas, migraciones ni pantallas en el Freeze.**
 
@@ -276,10 +277,10 @@ Cada una incluye los estados normal, vacío, carga, error, éxito, alertas, perm
 
 ## 17. Fases
 
-| Fase | Contenido |
-| --- | --- |
-| F4 Work Center Foundation | Centros, worklists, ítems, asignaciones, políticas de prioridad, vistas guardadas, estructura de Mi Trabajo |
-| F5 Work Center Operations | Recepción por escaneo, contexto de muestra, TAT Engine, supervisor, turnos, reasignación, centro de Calidad (registros V1) |
+| Fase                       | Contenido                                                                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| F4 Work Center Foundation  | Centros, worklists, ítems, asignaciones, políticas de prioridad, vistas guardadas, estructura de Mi Trabajo                                            |
+| F5 Work Center Operations  | Recepción por escaneo, contexto de muestra, TAT Engine, supervisor, turnos, reasignación, centro de Calidad (registros V1)                             |
 | F6 Resultados y validación | Entrada individual y masiva, autosave, fórmulas, delta, críticos, repeticiones, validación técnica y profesional, integración con el Delivery Calendar |
-| F10 | Productividad y Operations Center |
-| F17+ | Worklists por equipo (conector) y Clinical AI |
+| F10                        | Productividad y Operations Center                                                                                                                      |
+| F17+                       | Worklists por equipo (conector) y Clinical AI                                                                                                          |
