@@ -103,10 +103,9 @@ Hay **tres caminos de ejecución cerrados** (decisión N de F1.2), pero **solo d
   - Conserva las garantías del kernel: validación, límite de intentos, transacción con RLS, auditoría encadenada y outbox, e idempotencia donde aplica.
   - No ejecuta comandos de negocio.
 
-**Relación con la [ADR 0003](0003-comandos-auditoria-outbox.md).** La ADR 0003, aprobada, establece que todo cambio de datos es un comando ejecutado por el CommandBus. Esta ADR propone **delimitar** ese principio con la única excepción del pipeline de autenticación.
+**Relación con la [ADR 0003](0003-comandos-auditoria-outbox.md).** La ADR 0003, aprobada, establece que todo cambio de datos es un comando ejecutado por el CommandBus. Esta ADR **delimita** ese principio con la única excepción del pipeline de autenticación.
 
-- **Mientras esta ADR esté en estado Propuesta**, la excepción **no está formalmente aprobada** como decisión arquitectónica, y el principio de la ADR 0003 rige sin excepciones.
-- **Al aprobarse esta ADR**, esa aprobación formaliza la excepción delimitada.
+- **Esta ADR fue aprobada el 28 de septiembre de 2026.** Su aprobación formaliza la **única excepción delimitada** al principio general de la ADR 0003: el pipeline de autenticación, cerrado a los puntos de entrada enumerados. No cambia ninguna otra decisión técnica.
 - **La ADR 0003 no queda modificada automáticamente.** Su alineación documental posterior es un trabajo separado, y no se modifica en esta tarea.
 
 ### 7. Actor `platform`
