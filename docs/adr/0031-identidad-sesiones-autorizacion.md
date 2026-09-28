@@ -1,6 +1,6 @@
 # ADR 0031 — Identidad, sesiones y autorización
 
-**Estado:** **Propuesta** · 27 de septiembre de 2026 · formaliza el diseño aprobado de F1.2. Es criterio de entrada de F1.3: debe aprobarse antes de iniciar su implementación.
+**Estado:** aprobado · 27 de septiembre de 2026 · aprobada el 28 de septiembre de 2026 · formaliza el diseño aprobado de F1.2. Criterio de entrada de F1.3 (ADR aprobada).
 
 ## Contexto
 
