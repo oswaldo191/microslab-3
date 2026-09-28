@@ -80,30 +80,34 @@ El desafío MFA:
 
 **Cuando el MFA es requerido**, porque cualquier rol activo lo exige, **la sesión solo puede crearse después de un MFA válido**. Un desafío nunca se acepta como access token ni concede autorización en la API.
 
-### 6. Caminos de ejecución
+### 6. Caminos de ejecución y mecanismo de escritura
 
-Toda escritura ocurre por uno de **tres caminos cerrados** (decisión N de F1.2):
+Esta sección distingue dos conceptos:
 
-1. **CommandBus.** Toda operación hecha por un usuario autenticado, con módulo habilitado y permiso de la base.
-2. **Pipeline de autenticación.** Una lista fija de puntos de entrada:
-   - login;
-   - MFA;
-   - refresh;
-   - logout;
-   - activación;
-   - cambio de la propia contraseña.
+- **Caminos de ejecución:** por dónde entra una operación.
+- **Mecanismo de escritura:** qué pieza del kernel escribe los datos.
 
-   No exige un permiso de negocio, pero cada punto tiene su propia verificación, con validación, límite de intentos, transacción con RLS, auditoría y outbox, e idempotencia donde aplica.
+Hay **tres caminos de ejecución cerrados** (decisión N de F1.2), pero **solo dos mecanismos de escritura**: el CommandBus y, como excepción enumerada, el pipeline de autenticación.
 
-3. **Runner de infraestructura.** Una lista fija de comandos de infraestructura, que pasan por el **mismo** CommandBus con un contexto de mínimo privilegio.
+| Camino de ejecución              | Mecanismo de escritura                          | Qué cubre                                                                                                        |
+| -------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1. **CommandBus**                | **CommandBus**                                  | Toda operación de negocio y administración de un usuario autenticado, con módulo habilitado y permiso de la base |
+| 2. **Pipeline de autenticación** | **Pipeline de autenticación** (única excepción) | Solo estos puntos de entrada: login, MFA, refresh, logout, activación y cambio de la propia contraseña           |
+| 3. **Runner de infraestructura** | **CommandBus** (el mismo)                       | Una lista fija de comandos de infraestructura, con contexto de mínimo privilegio                                 |
 
-**Relación con la [ADR 0003](0003-comandos-auditoria-outbox.md):** la ADR 0003 establece que todo cambio de datos es un comando del CommandBus. Esta ADR **delimita** ese principio:
+- **El CommandBus** sigue siendo el mecanismo central de escritura para las operaciones de negocio y para el runner de infraestructura.
+- **El runner de infraestructura** no es un segundo mecanismo de escritura independiente: es un punto de entrada controlado que ejecuta comandos a través del mismo CommandBus, con las mismas etapas.
+- **El pipeline de autenticación** es la **única vía de escritura** que constituye una excepción al principio general de la ADR 0003.
+  - Está **cerrada y limitada** a los puntos de entrada enumerados.
+  - No exige un permiso de negocio, pero cada punto tiene su propia verificación.
+  - Conserva las garantías del kernel: validación, límite de intentos, transacción con RLS, auditoría encadenada y outbox, e idempotencia donde aplica.
+  - No ejecuta comandos de negocio.
 
-- El CommandBus sigue siendo el camino de toda operación de negocio y administración.
-- El runner de infraestructura también lo usa.
-- El pipeline de autenticación es la única excepción, acotada y enumerada. Conserva las garantías del kernel: transacción, RLS, auditoría encadenada y outbox.
+**Relación con la [ADR 0003](0003-comandos-auditoria-outbox.md).** La ADR 0003, aprobada, establece que todo cambio de datos es un comando ejecutado por el CommandBus. Esta ADR propone **delimitar** ese principio con la única excepción del pipeline de autenticación.
 
-La ADR 0003 no se modifica en esta tarea. Su alineación documental queda pendiente.
+- **Mientras esta ADR esté en estado Propuesta**, la excepción **no está formalmente aprobada** como decisión arquitectónica, y el principio de la ADR 0003 rige sin excepciones.
+- **Al aprobarse esta ADR**, esa aprobación formaliza la excepción delimitada.
+- **La ADR 0003 no queda modificada automáticamente.** Su alineación documental posterior es un trabajo separado, y no se modifica en esta tarea.
 
 ### 7. Actor `platform`
 
