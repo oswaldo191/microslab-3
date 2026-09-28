@@ -1,90 +1,148 @@
-# F1.2 — Diseño de MFA (F1.6) (borrador)
+# F1.2 — Diseño de MFA (F1.6)
 
-Todo es **propuesta**; no hay código ni migraciones.
+Todo es **propuesta**: no hay código, migraciones ni dependencias. Corresponde a la decisión J de `F1_2_DECISIONS.md`.
 
 ## 1. Alcance
 
-| Quién                                                          | Fase                                             | Motivo                                                                         |
-| -------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------ |
-| Usuarios de laboratorio (`app.users`) con un rol que exige MFA | **F1.6**                                         | Su modelo existe desde F0                                                      |
-| Usuarios de laboratorio sin ese rol                            | **F1.6, opcional** (lo activa el propio usuario) | Sin costo adicional                                                            |
-| Super Admin y usuarios de plataforma                           | **F2**, obligatorio desde el primer día          | El modelo de usuarios de plataforma **NO EXISTE**: llega con la consola (C-26) |
-| Portales de paciente y médico                                  | F16                                              | Autenticación propia (ADR 0017)                                                |
+| Quién                                                                        | Fase                                             | Motivo                                                                         |
+| ---------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Usuarios de laboratorio (`app.users`) con **algún** rol activo que exige MFA | **F1.6**, obligatorio                            | Su modelo existe desde F0                                                      |
+| Usuarios de laboratorio sin ese rol                                          | **F1.6**, opcional (lo activa el propio usuario) | Sin costo adicional                                                            |
+| Super Admin y usuarios de plataforma                                         | **F2**, obligatorio desde el primer día          | El modelo de usuarios de plataforma **NO EXISTE**: llega con la consola (C-26) |
+| Portales de paciente y médico                                                | F16                                              | Autenticación propia (ADR 0017)                                                |
 
-**Qué roles lo exigen:** una columna nueva `app.roles.requires_mfa`.
+**Regla de roles:** si **cualquiera** de los roles activos del usuario tiene `requires_mfa = true`, el usuario debe completar el MFA. No depende de un rol "principal", porque un usuario puede tener varios.
 
-- La plantilla `lab_admin` la trae en `true`.
-- Los roles fiscales, que existirán en F7, la tendrán en `true`, como pide el Freeze (§6).
+- Se evalúa como `bool_or(requires_mfa)` sobre los roles activos, tanto en el login como en cada petición (`F1_2_AUTHZ.md` §1).
+- La plantilla `lab_admin` trae `requires_mfa = true`, y los roles fiscales de F7 también lo tendrán (Freeze §6).
 
-**Contradicción resuelta:** el Freeze exige MFA para Super Admin, pero ese usuario no existe hasta F2. Por eso F1.6 cubre solo usuarios de laboratorio. Hay que actualizar la sección 6 del Freeze para indicarlo (sección 9 del diseño).
+**Contradicción resuelta:** el Freeze exige MFA para Super Admin, pero ese usuario no existe hasta F2. F1.6 cubre solo usuarios de laboratorio. El ajuste del Freeze está listado en `F1_2_DESIGN.md` §9.
 
 ## 2. Factor
 
-- **TOTP** (RFC 6238): SHA-1, 6 dígitos, periodo de 30 s y ventana de ±1 periodo.
-- **Implementación:** con `node:crypto` (HMAC), verificada con los vectores de prueba de la RFC. No requiere dependencias.
-- **Anti-replay:** se guarda el último periodo usado (`last_used_step`); un código de ese periodo o de uno anterior se rechaza.
-- **Descartados:**
-  - SMS: intercambio de SIM, costo y dependencia de un proveedor.
-  - Correo: no existe hasta F6.
-  - WebAuthn o passkeys: después de V1.
+- **TOTP** (RFC 6238): SHA-1, 6 dígitos, periodo de 30 s, ventana de ±1 periodo.
+- **Implementación:** con `node:crypto` (HMAC), verificada con los vectores de prueba de la RFC. Sin dependencias.
+- **Anti-replay:** se guarda `last_used_step` y se rechaza un código de ese periodo o de uno anterior.
+- **Secreto:** cifrado en reposo con AES-256-GCM. La llave depende de D-10; mientras tanto viene de variables de entorno o de un archivo de secretos montado. `secret_key_id` permite rotarla.
+- **Descartados:** SMS (intercambio de SIM, costo, proveedor), correo (no existe hasta F6), WebAuthn o passkeys (después de V1).
 
-## 3. Flujos
+## 3. Desafío MFA (`MFA challenge ≠ access JWT`)
 
-- **Login con MFA:**
-  1. La contraseña correcta crea la sesión en estado "pendiente de MFA" (`mfa_verified_at IS NULL`) y responde 401 `MFA_REQUIRED` con un token de desafío de vida corta.
-  2. Con un código válido se fija `mfa_verified_at` y se emiten el access token y el refresh.
-- **Alta (enrollment):**
-  1. Si el usuario tiene un rol que exige MFA y no tiene factor, recibe 403 `MFA_ENROLLMENT_REQUIRED` en todo, salvo en los endpoints de alta.
-  2. Se genera el secreto y se muestra el URI `otpauth://` una sola vez.
-  3. El usuario confirma con un código válido; el factor pasa a `active`.
-  4. Se muestran **una sola vez** 10 códigos de recuperación.
+El desafío MFA es un **artefacto separado**: representa un intento de autenticación a medio completar. **No es una sesión ni un access token.**
+
+| Aspecto                    | Diseño                                                                                                                                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Cómo se crea               | Solo en el pipeline de autenticación: tras una contraseña correcta (propósito `login` o `enrollment`) o, dentro de una sesión existente, al pedir reautenticación (propósito `reauth`)           |
+| Forma                      | Valor opaco de 256 bits aleatorios, **no es un JWT**. En la base solo se guarda su hash                                                                                                          |
+| Usuario asociado           | `user_id` del usuario que acertó la contraseña                                                                                                                                                   |
+| Sesión asociada            | Ninguna en `login` y `enrollment`, porque la sesión aún no existe. En `reauth`, el `session_id` de la sesión que se reautentica                                                                  |
+| Propósito                  | `login`, `enrollment` o `reauth`. Cada endpoint acepta solo su propósito                                                                                                                         |
+| Vinculación con el intento | Guarda el laboratorio (del host), la IP y el agente del intento. Solo se acepta en el mismo laboratorio                                                                                          |
+| Expiración                 | Corta: 5 min                                                                                                                                                                                     |
+| Estado                     | `pending` → `consumed`; o `expired`; o `locked` al agotar los intentos                                                                                                                           |
+| Intentos                   | Máximo 5. Cada fallo cuenta también en `failed_login_count` del usuario                                                                                                                          |
+| Uso único                  | Se consume con `SELECT … FOR UPDATE`: pasa de `pending` a `consumed` en la misma transacción que crea la sesión                                                                                  |
+| Replay y reutilización     | Un desafío `consumed`, `expired` o `locked` recibe 401 `CHALLENGE_INVALID` y queda auditado. No crea sesión                                                                                      |
+| Si expira                  | 401 `CHALLENGE_INVALID`; el usuario debe volver a empezar desde la contraseña                                                                                                                    |
+| Quién lo usa               | Solo los endpoints `/api/v1/auth/mfa/*`. **No se acepta como access token:** presentado como `Bearer`, recibe 401 `TOKEN_INVALID` porque no es un JWT con `typ = at+jwt`                         |
+| Qué autoriza               | **Nada** en la API. Solo permite completar el MFA del intento al que pertenece                                                                                                                   |
+| Transporte                 | En el cuerpo de la respuesta de `login` y en el cuerpo de `mfa/*`. Se guarda en memoria del cliente, nunca en almacenamiento persistente del navegador. Sin el TOTP del usuario no sirve de nada |
+
+**Cómo un desafío válido se convierte en sesión.** En **una sola transacción**, con RLS del laboratorio del host:
+
+1. Se bloquea la fila del desafío y se comprueba que está `pending`, vigente, con intentos disponibles, del mismo laboratorio y del propósito del endpoint.
+2. Se verifica el TOTP (con anti-replay) o un código de recuperación.
+   - **Si falla:** se incrementan los intentos del desafío y del usuario; la transacción termina sin crear sesión.
+3. Si es correcto:
+   - el desafío pasa a `consumed`;
+   - se actualiza `last_used_step`;
+   - se crea `app.user_sessions` con `mfa_verified_at = now()`;
+   - se emite el refresh;
+   - se escribe la auditoría y el evento.
+4. Se devuelven el access JWT y la cookie de refresh.
+
+El desafío **no puede convertirse en sesión sin verificar el TOTP** o un código de recuperación. Ningún otro camino crea una sesión a partir de un desafío.
+
+## 4. Flujos
+
+**Sin MFA exigido:**
+
+```
+contraseña correcta → sesión autenticada → access JWT + refresh
+```
+
+**Con MFA exigido y factor activo:**
+
+```
+contraseña correcta → 401 MFA_REQUIRED + desafío (login)
+→ POST /auth/mfa/verify { challenge, code }
+→ TOTP válido → desafío consumido → sesión autenticada → access JWT + refresh
+```
+
+**Con MFA exigido y sin factor (alta):**
+
+```
+contraseña correcta → 401 MFA_ENROLLMENT_REQUIRED + desafío (enrollment)
+→ POST /auth/mfa/enroll/start { challenge }      → secreto nuevo (pending) + URI otpauth:// mostrado una sola vez
+→ POST /auth/mfa/enroll/confirm { challenge, code } → TOTP válido → factor active + 10 códigos de recuperación (una sola vez)
+→ desafío consumido → sesión autenticada → access JWT + refresh
+```
+
+**Reautenticación:**
+
+- Los comandos que la declaran exigen `last_reauth_at` reciente (5 min); si no, 401 `REAUTH_REQUIRED`.
+- El cliente pide un desafío `reauth` sobre su sesión y lo consume con contraseña o TOTP; se actualiza `last_reauth_at`.
+- Es una etapa declarada por comando, que la adenda de la ADR 0003 ya anticipa.
+
+**Rol que pasa a exigir MFA:** en la siguiente petición, la resolución ve `bool_or(requires_mfa) = true` y una sesión sin `mfa_verified_at`. Responde 401 `MFA_REQUIRED` y el usuario vuelve a autenticarse con MFA.
+
+## 5. Códigos de recuperación, reset, bloqueo y sesiones
+
 - **Códigos de recuperación:**
   - 10 códigos de 10 caracteres en base32, guardados solo como hash (SHA-256 con sal por usuario);
-  - cada uno sirve una sola vez;
-  - usar uno se audita y avisa al usuario;
+  - cada uno sirve una vez y solo junto con un desafío válido;
+  - usar uno se audita;
   - regenerarlos invalida los anteriores.
-- **Reset:**
-  - lo hace un administrador con `security.users.reset_mfa`, con motivo y reautenticación;
-  - si no hay otro administrador, se usa el CLI de bootstrap con `--break-glass`;
-  - el reset desactiva el factor, revoca **todas** las sesiones del usuario y lo obliga a darse de alta de nuevo.
-- **Sesiones al activar el MFA:** se revocan todas las demás sesiones del usuario; la actual queda verificada.
-  - Si un rol pasa a exigir MFA, las sesiones de sus usuarios sin factor quedan limitadas a 403 `MFA_ENROLLMENT_REQUIRED` en la siguiente petición.
-- **Bloqueo:** los fallos de TOTP cuentan en `failed_login_count`, con el mismo backoff que la contraseña.
-- **Reautenticación (Freeze §6, adenda de la ADR 0003):**
-  - los comandos que la declaran exigen `last_reauth_at` reciente (propuesta: 5 min), con contraseña o TOTP;
-  - si no la tienen, responden 401 `REAUTH_REQUIRED`;
-  - es una etapa declarada por comando, que la adenda de la ADR 0003 ya anticipa;
-  - no cambia el orden del resto de la tubería.
+- **Reset del MFA de otro usuario:**
+  - por el CommandBus, con `security.users.reset_mfa`, motivo y reautenticación;
+  - si no queda otro administrador, `security.admin.break_glass` por el runner de infraestructura (`F1_2_SESSIONS_JWT.md` §6);
+  - el reset desactiva el factor, revoca **todas** las sesiones del usuario, y el siguiente login exige el alta.
+- **Bloqueo:** los fallos de TOTP cuentan en el desafío (máximo 5) y en `failed_login_count` del usuario, con el mismo backoff que la contraseña.
+- **Sesiones al activar el MFA:**
+  - Si el usuario lo activa voluntariamente desde una sesión, se revocan sus demás sesiones y la actual queda con `mfa_verified_at`.
+  - En el alta obligatoria no existían sesiones previas, porque el login no la creó.
+- **Auditoría:**
+  - alta y confirmación del factor;
+  - verificación fallida;
+  - desafío vencido o reutilizado;
+  - uso de un código de recuperación y su regeneración;
+  - reset y desactivación.
 
-## 4. Modelo de datos propuesto (F1.6)
+  El secreto y los códigos nunca se auditan; la redacción de la auditoría ya oculta las claves `mfa` y `otp`.
 
-### 4.1 `app.roles.requires_mfa`
+## 6. Modelo de datos (F1.6)
 
-Columna booleana, con `false` por defecto.
+### 6.1 `app.roles.requires_mfa`
 
-### 4.2 `app.user_mfa_factors`
+Columna booleana, `false` por defecto.
+
+### 6.2 `app.user_mfa_factors`
 
 - **Columnas:**
   - `id`, `laboratory_id`, `user_id`;
   - `type` (`totp`);
-  - `secret_ciphertext`, `secret_key_id` (cifrado AES-256-GCM);
+  - `secret_ciphertext`, `secret_key_id`;
   - `status` (`pending`, `active`, `disabled`);
   - `last_used_step`;
   - `created_at`, `activated_at`, `disabled_at`, `disabled_by`, `disabled_reason`.
 - **Claves:** foránea compuesta al usuario.
-- **Índice:** único `(laboratory_id, user_id) WHERE status = 'active'`.
+- **Índices:** único `(laboratory_id, user_id) WHERE status = 'active'`.
 - **RLS:** aislamiento por laboratorio.
-- **Auditoría:** alta, desactivación y reset (el secreto nunca se audita; la redacción ya lo cubre).
+- **Auditoría:** alta, desactivación y reset.
 - **Actualización:** solo estado y `last_used_step`.
 - **Borrado físico:** no.
 
-**La llave de cifrado del secreto TOTP** depende de D-10, igual que las llaves del JWT.
-
-- Mientras tanto, viene de variables de entorno o de un archivo de secretos montado.
-- `secret_key_id` permite rotarla.
-- Hace falta cifrar: un volcado de la base sin la llave no debe permitir saltarse el MFA.
-
-### 4.3 `app.user_recovery_codes`
+### 6.3 `app.user_recovery_codes`
 
 - **Columnas:** `id`, `laboratory_id`, `user_id`, `factor_id`, `code_hash`, `created_at`, `used_at`, `revoked_at`.
 - **Claves:** foránea compuesta al factor.
@@ -92,6 +150,25 @@ Columna booleana, con `false` por defecto.
 - **Actualización:** solo `used_at` y `revoked_at`.
 - **Borrado físico:** no.
 
-### 4.4 Columnas en `app.user_sessions`
+### 6.4 `app.mfa_challenges`
 
-`mfa_verified_at` y `last_reauth_at` (tabla definida en F1.5).
+- **Columnas:**
+  - `id`, `laboratory_id`, `user_id`;
+  - `session_id` (solo en `reauth`);
+  - `purpose` (`login`, `enrollment`, `reauth`);
+  - `challenge_hash` (único);
+  - `status` (`pending`, `consumed`, `expired`, `locked`);
+  - `attempts`, `max_attempts`;
+  - `created_at`, `expires_at`, `consumed_at`;
+  - `created_ip`, `user_agent`.
+- **Claves:** foráneas compuestas al usuario y, cuando existe, a la sesión.
+- **Índices:** único en `challenge_hash`; `(laboratory_id, user_id, status)`.
+- **RLS:** aislamiento por laboratorio.
+- **Auditoría:** creación, consumo y fallos.
+- **Retención:** según D-09.
+- **Actualización:** solo estado, `attempts` y `consumed_at`.
+- **Borrado físico:** no.
+
+### 6.5 Columnas en `app.user_sessions`
+
+`mfa_verified_at` y `last_reauth_at`. La tabla está definida en F1.5.
